@@ -10,11 +10,11 @@ import { ValidationException } from './exceptions';
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
   const config = new DocumentBuilder()
-    .setTitle('Drag06 API')
-    .setDescription('This api for drag06')
-    .setVersion('1.0')
-    .addTag('auth')
-    .build();
+  .setTitle('Drag06 API')
+  .setDescription('This api for drag06')
+  .setVersion('1.0')
+  .addTag('auth')
+  .build();
   app.useGlobalPipes(
     new ValidationPipe({
       exceptionFactory: (errors) => new ValidationException(errors),
