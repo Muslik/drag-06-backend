@@ -5,5 +5,8 @@
   "singleQuote": true,
   "tabWidth": 2,
   "trailingComma": "all",
-  "useTabs": false
+  "useTabs": false,
+  "importOrder": ["<THIRD_PARTY_MODULES>", "^@nest/(.*)$", "^@drag/(.*)$", "^[./]"],
+  "importOrderSeparation": true,
+  "importOrderParserPlugins": ["typescript", "classProperties", "decorators-legacy"]
 }
