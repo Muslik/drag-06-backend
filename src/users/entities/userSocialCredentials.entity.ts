@@ -13,7 +13,7 @@ export class UserSocialCredentialsEntity {
   @Column({ unique: true })
   providerType: string;
 
-  @Column('uuid')
+  @Column()
   userAccountId: string;
 
   @OneToOne(() => UserAccountEntity, {

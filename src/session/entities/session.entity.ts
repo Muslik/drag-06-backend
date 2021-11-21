@@ -2,13 +2,13 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 't
 
 import { UserAccountEntity } from '@drag/users/entities';
 
-@Entity('refresh_tokens')
-export class RefreshTokenEntity {
+@Entity('sessions')
+export class SessionEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
-  refreshToken: string;
+  sessionId: string;
 
   @Column()
   userAgent: string;
@@ -16,18 +16,18 @@ export class RefreshTokenEntity {
   @Column()
   ip: string;
 
-  @Column('bigint')
-  expires: number;
-
   @Column('timestamp with time zone', { default: () => 'CURRENT_TIMESTAMP' })
   createdAt: string;
 
-  @Column()
-  userAccountId: string;
+  @Column('timestamp with time zone', { default: () => 'CURRENT_TIMESTAMP' })
+  lastAccessAt: string;
 
   @ManyToOne(() => UserAccountEntity, {
     onDelete: 'CASCADE',
   })
   @JoinColumn()
   userAccount: UserAccountEntity;
+
+  @Column()
+  userAccountId: string;
 }

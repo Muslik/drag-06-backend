@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 
 export class RefreshDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  fingerprint: string;
+  refreshToken: string;
 }

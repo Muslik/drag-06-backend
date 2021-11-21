@@ -15,7 +15,7 @@ import { JsonWebTokenError, TokenExpiredError, NotBeforeError } from 'jsonwebtok
 import { catchError, EMPTY, Observable } from 'rxjs';
 import { QueryFailedError } from 'typeorm';
 
-import { COOKIE_PATH, REFRESH_TOKEN_COOKIE_NAME } from '@drag/auth/constants';
+import { SESSION_ID } from '@drag/auth/constants';
 import { Exception, AuthenticationException, QueryFailedException } from '@drag/exceptions';
 
 @Module({})
@@ -71,7 +71,7 @@ export class ExceptionsInterceptor implements NestInterceptor {
       .pipe(
         catchError((error) => {
           if (error instanceof AuthenticationException) {
-            response.clearCookie(REFRESH_TOKEN_COOKIE_NAME, { path: COOKIE_PATH });
+            response.clearCookie(SESSION_ID);
           }
           throw error;
         }),

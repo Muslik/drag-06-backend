@@ -31,7 +31,7 @@ export class UsersService {
         firstName,
         lastName,
         email,
-        userName: email,
+        username: email,
       });
       const createdUser = await queryRunner.manager.save(newUser);
       const userSocialCredentials = this.userSocialCredentialsRepository.create({
@@ -40,6 +40,7 @@ export class UsersService {
         userAccount: createdUser,
       });
       await queryRunner.manager.save(userSocialCredentials);
+      await queryRunner.commitTransaction();
       return createdUser;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -51,6 +52,10 @@ export class UsersService {
 
   findAll(): Promise<UserAccountEntity[]> {
     return this.userAccountRepository.find();
+  }
+
+  findById(id: string) {
+    return this.userAccountRepository.findOne(id);
   }
 
   findByEmail(email: string) {

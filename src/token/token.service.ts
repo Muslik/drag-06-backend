@@ -2,16 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Connection, Not, QueryRunner, Repository } from 'typeorm';
+import { Connection, Repository } from 'typeorm';
 import { v1 as uuid } from 'uuid';
 
 import { Config } from '@drag/config';
 import { AuthenticationException } from '@drag/exceptions';
+import { UserIdentity } from '@drag/shared/interfaces';
 
 import { RefreshTokenEntity } from './entities';
-import { JWTPayload, UserIdentity } from './interfaces';
-
-const MAX_TOKENS_COUNT = 5;
+import { JWTPayload } from './interfaces';
 
 @Injectable()
 export class TokenService {
@@ -29,8 +28,7 @@ export class TokenService {
   }
 
   private createToken(payload: string | Record<string, unknown> | Buffer, expiresIn: number) {
-    const signedPayload = this.jwtService.sign(payload, { expiresIn, jwtid: uuid() });
-    return signedPayload;
+    return this.jwtService.sign(payload, { expiresIn, jwtid: uuid() });
   }
 
   private createAccessToken(payload: string | Record<string, unknown> | Buffer) {
@@ -46,17 +44,6 @@ export class TokenService {
     const accessToken = this.createAccessToken({ userId, random });
     const refreshToken = this.createRefreshToken({ userId, random });
     return { accessToken, refreshToken };
-  }
-
-  private async getExceededRefreshTokens(userId: string, queryRunner: QueryRunner) {
-    const [tokens, tokensCount] = await queryRunner.manager.findAndCount(RefreshTokenEntity, {
-      userAccountId: userId,
-    });
-
-    if (tokensCount === MAX_TOKENS_COUNT) {
-      return tokens;
-    }
-    return null;
   }
 
   private async refreshUserTokens(currentToken: RefreshTokenEntity, userIdentity: UserIdentity) {
@@ -81,74 +68,29 @@ export class TokenService {
     userId: string,
     refreshToken: string,
     expires: number,
-    { fingerprint, userAgent, ip }: UserIdentity,
+    { userAgent, ip }: UserIdentity,
   ) {
-    const queryRunner = this.connection.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      const newRefreshToken = queryRunner.manager.create(RefreshTokenEntity, {
-        refreshToken,
-        fingerprint,
-        userAgent,
-        ip,
-        userAccountId: userId,
-        expires,
-      });
-      const exceededTokens = await this.getExceededRefreshTokens(userId, queryRunner);
-      if (exceededTokens) {
-        await queryRunner.manager.remove(exceededTokens);
-      }
-      await queryRunner.manager.save(newRefreshToken);
-      await queryRunner.commitTransaction();
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+    const newRefreshToken = this.refreshTokenRepository.create({
+      refreshToken,
+      userAgent,
+      ip,
+      userAccountId: userId,
+      expires,
+    });
+    await this.refreshTokenRepository.save(newRefreshToken);
   }
 
-  private async getValidRefreshToken(refreshToken: string, userIdentity: UserIdentity) {
-    const tokenInDb = await this.refreshTokenRepository.findOne({ refreshToken });
-    if (!tokenInDb) {
-      return null;
-    }
-    if (tokenInDb.fingerprint !== userIdentity.fingerprint) {
-      await this.refreshTokenRepository.delete(tokenInDb);
-      return null;
-    }
-    return tokenInDb;
+  private getCurrentRefreshToken(refreshToken: string) {
+    return this.refreshTokenRepository.findOne({ refreshToken });
   }
 
   verifyToken(token: string) {
     return this.jwtService.verify<JWTPayload>(token);
   }
 
-  async deleteAllTokens(refreshToken: string, userIdentity: UserIdentity) {
-    const tokenInDb = await this.getValidRefreshToken(refreshToken, userIdentity);
-    if (!tokenInDb) {
-      throw new AuthenticationException();
-    }
-    return this.refreshTokenRepository.delete({
-      userAccountId: tokenInDb.userAccountId,
-      refreshToken: Not(refreshToken),
-    });
-  }
-
-  async deleteToken(refreshToken: string, userIdentity: UserIdentity) {
-    this.verifyToken(refreshToken);
-    const tokenInDb = await this.getValidRefreshToken(refreshToken, userIdentity);
-    if (!tokenInDb) {
-      throw new AuthenticationException();
-    }
-    return this.refreshTokenRepository.delete(tokenInDb);
-  }
-
   async getRefreshedUserTokens(refreshToken: string, userIdentity: UserIdentity) {
     this.verifyToken(refreshToken);
-    const tokenInDb = await this.getValidRefreshToken(refreshToken, userIdentity);
+    const tokenInDb = await this.getCurrentRefreshToken(refreshToken);
     if (!tokenInDb) {
       throw new AuthenticationException();
     }

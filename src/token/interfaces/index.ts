@@ -1,8 +1,4 @@
-export interface UserIdentity {
-  fingerprint: string;
-  userAgent: string;
-  ip: string;
-}
+
 
 export interface JWTPayload {
   userId: string;

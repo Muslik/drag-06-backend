@@ -4,6 +4,29 @@ import * as request from 'supertest';
 
 import { AppModule } from '../src/app.module';
 
+const mockedGoogleData = {
+  id: '1',
+  family_name: 'Ivanov',
+  given_name: 'Ivan',
+  email: 'Ivan@mail.ru',
+};
+
+jest.mock('googleapis', () => ({
+  google: {
+    auth: {
+      JWT: '123',
+      OAuth2: function () {
+        this.setCredentials = () => {};
+      },
+    },
+    oauth2: () => ({
+      userinfo: {
+        get: () => Promise.resolve({ data: mockedGoogleData }),
+      },
+    }),
+  },
+}));
+
 describe('AppController (e2e)', () => {
   let app: INestApplication;
 

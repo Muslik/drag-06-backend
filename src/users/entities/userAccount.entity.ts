@@ -51,7 +51,7 @@ export class UserAccountEntity {
     unique: true,
     length: 255,
   })
-  userName: string;
+  username: string;
 
   @Column({
     nullable: true,

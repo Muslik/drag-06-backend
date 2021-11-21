@@ -15,6 +15,8 @@ import { config } from './config';
 import { ExceptionsModule } from './exceptions/exceptions.module';
 import { TokenModule } from './token/token.module';
 import { UsersModule } from './users/users.module';
+import { SessionModule } from './session/session.module';
+import { OauthModule } from './oauth/oauth.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -60,6 +62,8 @@ const ENV = process.env.NODE_ENV;
     UsersModule,
     TokenModule,
     ExceptionsModule.forRoot(),
+    SessionModule,
+    OauthModule,
   ],
   controllers: [AppController],
   providers: [

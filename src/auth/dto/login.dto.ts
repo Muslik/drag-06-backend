@@ -6,9 +6,4 @@ export class LoginGoogleDto {
   @IsString()
   @IsNotEmpty()
   token: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  fingerprint: string;
 }
