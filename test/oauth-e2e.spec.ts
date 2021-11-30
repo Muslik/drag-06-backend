@@ -21,7 +21,7 @@ const mockedGoogleData = {
 jest.mock('googleapis', () => ({
   google: {
     auth: {
-      OAuth2: function () {
+      OAuth2() {
         this.setCredentials = () => {};
       },
     },

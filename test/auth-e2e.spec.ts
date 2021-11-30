@@ -12,18 +12,20 @@ import { SessionEntity } from '@drag/session/entities/session.entity';
 import { RefreshTokenEntity } from '@drag/token/entities';
 import { UserAccountEntity, UserSocialCredentialsEntity } from '@drag/users/entities';
 
+const email = 'Ivan@mail.ru';
+
 const mockedGoogleData = {
   id: '1',
   family_name: 'Ivanov',
   given_name: 'Ivan',
-  email: 'Ivan@mail.ru',
+  email,
 };
 
 jest.mock('googleapis', () => ({
   google: {
     auth: {
       JWT: '123',
-      OAuth2: function () {
+      OAuth2() {
         this.setCredentials = () => {};
       },
     },
@@ -58,8 +60,8 @@ const mockedUser = {
   firstName: 'Ivan',
   avatarColor: expect.stringMatching(NON_EMPTY_STRING_REGEX),
   lastName: 'Ivanov',
-  email: 'Ivan@mail.ru',
-  username: 'Ivan@mail.ru',
+  email: email,
+  username: email,
 };
 
 describe('Auth', () => {
@@ -108,7 +110,7 @@ describe('Auth', () => {
       const user = await connection
         .getRepository(UserAccountEntity)
         .createQueryBuilder('user')
-        .where('user.email = :email', { email: 'Ivan@mail.ru' })
+        .where('user.email = :email', { email })
         .getOne();
       const userSocialCredentials = await connection
         .getRepository(UserSocialCredentialsEntity)
@@ -149,7 +151,7 @@ describe('Auth', () => {
       const user = await connection
         .getRepository(UserAccountEntity)
         .createQueryBuilder('user')
-        .where('user.email = :email', { email: 'Ivan@mail.ru' })
+        .where('user.email = :email', { email })
         .getOne();
       let sessionCount = await connection
         .getRepository(SessionEntity)
@@ -226,7 +228,7 @@ describe('Auth', () => {
       const user = await connection
         .getRepository(UserAccountEntity)
         .createQueryBuilder('user')
-        .where('user.email = :email', { email: 'Ivan@mail.ru' })
+        .where('user.email = :email', { email })
         .getOne();
       const response = await logoutAll({ sessionId: cookie.value });
       const sessionCount = await connection
