@@ -4,6 +4,6 @@ import { Controller, Get } from '@nestjs/common';
 export class UsersController {
   @Get()
   getUsers() {
-    return [{name: 'IVAN'}]
+    return [{ name: 'IVAN' }];
   }
 }

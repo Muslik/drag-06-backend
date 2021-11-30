@@ -13,10 +13,10 @@ import { AuthModule } from './auth/auth.module';
 import { AuthGuard } from './auth/guards/auth.guard';
 import { config } from './config';
 import { ExceptionsModule } from './exceptions/exceptions.module';
+import { OauthModule } from './oauth/oauth.module';
+import { SessionModule } from './session/session.module';
 import { TokenModule } from './token/token.module';
 import { UsersModule } from './users/users.module';
-import { SessionModule } from './session/session.module';
-import { OauthModule } from './oauth/oauth.module';
 
 const ENV = process.env.NODE_ENV;
 

@@ -13,9 +13,9 @@ import { SESSION_ID } from '@drag/auth/constants';
 import { LoginGoogleDto } from '@drag/auth/dto';
 import { AuthService } from '@drag/auth/services';
 import { ExceptionResponse } from '@drag/exceptions';
+import { SessionUserDto } from '@drag/session/dto';
 import { SessionService } from '@drag/session/session.service';
 import { Cookies, Public, UserAgent, UserId } from '@drag/shared/decorators';
-import { SessionUserDto } from '@drag/session/dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -50,9 +50,7 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: 'User not authorized', type: ExceptionResponse })
   @ApiInternalServerErrorResponse({ description: 'Something went wrong' })
   @Post('session')
-  getSessionUser(
-    @Cookies() { sessionId }: Record<string, string>,
-  ) {
+  getSessionUser(@Cookies() { sessionId }: Record<string, string>) {
     return this.sessionService.getSessionUserById(sessionId);
   }
 

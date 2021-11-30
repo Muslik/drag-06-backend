@@ -12,14 +12,14 @@ export class UserAccountEntity {
 
   @Column({
     nullable: true,
-    type: "varchar",
+    type: 'varchar',
     length: 50,
   })
   firstName: string | null;
 
   @Column({
     nullable: true,
-    type: "varchar",
+    type: 'varchar',
     length: 50,
   })
   lastName: string | null;
@@ -33,7 +33,7 @@ export class UserAccountEntity {
 
   @Column({
     nullable: true,
-    type: "varchar",
+    type: 'varchar',
     length: 255,
   })
   bio: string | null;
@@ -46,12 +46,12 @@ export class UserAccountEntity {
 
   @Column({
     nullable: true,
-    type: "varchar",
+    type: 'varchar',
   })
   city: string | null;
 
   @Column({
-    length: 20
+    length: 20,
   })
   avatarColor: string;
 
@@ -63,7 +63,7 @@ export class UserAccountEntity {
 
   @Column({
     nullable: true,
-    type: "varchar",
+    type: 'varchar',
     length: 50,
   })
   phone: string | null;

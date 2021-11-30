@@ -4,8 +4,8 @@ import * as crypto from 'crypto';
 import { Connection, QueryRunner, Repository } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 
-import { SessionEntity } from '@drag/session/entities/session.entity';
 import { SessionUserDto } from '@drag/session/dto';
+import { SessionEntity } from '@drag/session/entities/session.entity';
 import { UserIdentity } from '@drag/shared/interfaces';
 import { UserAccountEntity } from '@drag/users/entities';
 
@@ -35,11 +35,14 @@ export class SessionService {
 
   private serializeUerSession(userAccount: UserAccountEntity): SessionUserDto {
     const { id, username, email, firstName, lastName, avatarColor } = userAccount;
-    return { id, username, email, firstName, lastName, avatarColor }
+    return { id, username, email, firstName, lastName, avatarColor };
   }
 
   async getSessionUserById(sessionId: string): Promise<SessionUserDto> {
-    const { userAccount } = await this.sessionRepository.findOneOrFail({ sessionId }, { relations: ['userAccount'] });
+    const { userAccount } = await this.sessionRepository.findOneOrFail(
+      { sessionId },
+      { relations: ['userAccount'] },
+    );
     return this.serializeUerSession(userAccount);
   }
 
