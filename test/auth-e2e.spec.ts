@@ -60,7 +60,7 @@ const mockedUser = {
   firstName: 'Ivan',
   avatarColor: expect.stringMatching(NON_EMPTY_STRING_REGEX),
   lastName: 'Ivanov',
-  email: email,
+  email,
   username: email,
 };
 
