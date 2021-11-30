@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from "@nestjs/swagger";
 
 export class SessionUser {
   @ApiProperty()
@@ -11,8 +11,11 @@ export class SessionUser {
   email: string;
 
   @ApiProperty()
-  firstName: string;
+  firstName?: string;
 
   @ApiProperty()
-  lastName: string;
+  lastName?: string;
+
+  @ApiProperty()
+  color: string;
 }

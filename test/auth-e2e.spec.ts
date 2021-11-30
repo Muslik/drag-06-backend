@@ -56,6 +56,7 @@ const request = (
 const mockedUser = {
   id: expect.stringMatching(NON_EMPTY_STRING_REGEX),
   firstName: 'Ivan',
+  avatarColor: expect.stringMatching(NON_EMPTY_STRING_REGEX),
   lastName: 'Ivanov',
   email: 'Ivan@mail.ru',
   username: 'Ivan@mail.ru',

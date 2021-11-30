@@ -1,5 +1,4 @@
 import { Body, Controller, Ip, Post, Res } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
@@ -13,25 +12,22 @@ import { FastifyReply } from 'fastify';
 import { SESSION_ID } from '@drag/auth/constants';
 import { LoginGoogleDto } from '@drag/auth/dto';
 import { AuthService } from '@drag/auth/services';
-import { Config } from '@drag/config';
 import { ExceptionResponse } from '@drag/exceptions';
-import { SessionUser } from '@drag/session/interfaces';
 import { SessionService } from '@drag/session/session.service';
 import { Cookies, Public, UserAgent, UserId } from '@drag/shared/decorators';
+import { SessionUserDto } from '@drag/session/dto';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  private readonly maxAge = this.configService.get('jwt.refreshTokenTtl', { infer: true });
   constructor(
     private readonly authService: AuthService,
     private readonly sessionService: SessionService,
-    private readonly configService: ConfigService<Config>,
   ) {}
 
   @Public()
   @ApiOperation({ summary: 'Auth with google oauth token' })
-  @ApiCreatedResponse({ description: 'User successfully authorized', type: SessionUser })
+  @ApiCreatedResponse({ description: 'User successfully authorized', type: SessionUserDto })
   @ApiBadRequestResponse({ description: 'Bad request', type: ExceptionResponse })
   @ApiInternalServerErrorResponse({ description: 'Something went wrong' })
   @Post('login/google')
@@ -50,12 +46,11 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Read session token and return session user data' })
-  @ApiCreatedResponse({ description: 'Session exist', type: SessionUser })
+  @ApiCreatedResponse({ description: 'Session exist', type: SessionUserDto })
   @ApiUnauthorizedResponse({ description: 'User not authorized', type: ExceptionResponse })
   @ApiInternalServerErrorResponse({ description: 'Something went wrong' })
   @Post('session')
   getSessionUser(
-    @Res({ passthrough: true }) response: FastifyReply,
     @Cookies() { sessionId }: Record<string, string>,
   ) {
     return this.sessionService.getSessionUserById(sessionId);

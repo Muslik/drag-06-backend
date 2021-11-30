@@ -12,9 +12,7 @@ import { FastifyReply } from 'fastify';
 import { LoginGoogleDto } from '@drag/auth/dto';
 import { AuthService } from '@drag/auth/services';
 import { ExceptionResponse } from '@drag/exceptions';
-import { RefreshDto } from '@drag/oauth/dto/refresh.dto';
-import { JWTTokens } from '@drag/oauth/interfaces';
-import { SessionUser } from '@drag/session/interfaces';
+import { RefreshDto, JWTTokensDto } from '@drag/oauth/dto';
 import { Public, UserAgent } from '@drag/shared/decorators';
 import { TokenService } from '@drag/token/token.service';
 
@@ -28,13 +26,12 @@ export class OauthController {
 
   @Public()
   @ApiOperation({ summary: 'Auth with google oauth token' })
-  @ApiCreatedResponse({ description: 'User successfully authorized', type: SessionUser })
+  @ApiCreatedResponse({ description: 'User successfully authorized', type: JWTTokensDto })
   @ApiBadRequestResponse({ description: 'Bad request', type: ExceptionResponse })
   @ApiInternalServerErrorResponse({ description: 'Something went wrong' })
   @Post('login/google')
   async loginGoogle(
     @Body() loginDto: LoginGoogleDto,
-    @Res({ passthrough: true }) response: FastifyReply,
     @UserAgent() userAgent: string,
     @Ip() ip: string,
   ) {
@@ -47,7 +44,7 @@ export class OauthController {
   @ApiOperation({ summary: 'Refresh tokens' })
   @ApiCreatedResponse({
     description: 'Successfully refreshed',
-    type: JWTTokens,
+    type: JWTTokensDto,
   })
   @ApiBadRequestResponse({ description: 'Bad request', type: ExceptionResponse })
   @ApiUnauthorizedResponse({ description: 'User not authorized', type: ExceptionResponse })

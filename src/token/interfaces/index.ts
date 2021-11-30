@@ -1,5 +1,3 @@
-
-
 export interface JWTPayload {
   userId: string;
   iat: number;

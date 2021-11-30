@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, Repository } from 'typeorm';
 
+import { generateRandomPaletteColor } from '@drag/shared/constants';
+
 import { UserAccountEntity, UserSocialCredentialsEntity } from './entities';
 import { UserWithSocialCredentials } from './interfaces';
 
@@ -27,11 +29,13 @@ export class UsersService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
+      const avatarColor = generateRandomPaletteColor();
       const newUser = this.userAccountRepository.create({
         firstName,
         lastName,
         email,
         username: email,
+        avatarColor,
       });
       const createdUser = await queryRunner.manager.save(newUser);
       const userSocialCredentials = this.userSocialCredentialsRepository.create({
