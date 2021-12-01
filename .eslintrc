@@ -14,9 +14,7 @@
   "settings": {
     "import/resolver": {
       "node": {
-        "paths": [
-          "src"
-        ]
+        "paths": ["src"]
       }
     }
   },
@@ -24,9 +22,7 @@
     "import/order": "off",
     "import/no-unresolved": "off",
     "@typescript-eslint/no-explicit-any": "off",
-    "linebreak-style": [
-      "error",
-      "unix"
-    ]
+    "object-shorthand": ["error", "always", { "ignoreConstructors": true }],
+    "linebreak-style": ["error", "unix"]
   }
 }
