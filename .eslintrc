@@ -14,18 +14,15 @@
   "settings": {
     "import/resolver": {
       "node": {
-        "paths": [
-          "src"
-        ]
+        "paths": ["src"]
       }
     }
   },
   "rules": {
     "import/order": "off",
     "import/no-unresolved": "off",
-    "linebreak-style": [
-      "error",
-      "unix"
-    ]
+    "@typescript-eslint/no-explicit-any": "off",
+    "object-shorthand": ["error", "always", { "ignoreConstructors": true }],
+    "linebreak-style": ["error", "unix"]
   }
 }
