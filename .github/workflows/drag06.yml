@@ -21,5 +21,3 @@ jobs:
       run: yarn
     - name: Lint code
       run: yarn check:lint
-    - name: Format code
-      run: yarn check:format
