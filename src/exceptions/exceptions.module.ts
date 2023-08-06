@@ -56,6 +56,7 @@ const isJwtException = (exception: any) =>
 export class ExceptionsInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const response = context.switchToHttp().getResponse<FastifyReply>();
+
     return next
       .handle()
       .pipe(

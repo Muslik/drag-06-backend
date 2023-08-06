@@ -12,7 +12,10 @@ export class ExceptionResponse {
 export abstract class Exception {
   abstract code: number;
 
-  constructor(public readonly message: string, public readonly inner?: any) {}
+  constructor(
+    public readonly message: string,
+    public readonly inner?: any,
+  ) {}
 
   toString(): string {
     return 'Exception';
