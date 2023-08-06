@@ -1,10 +1,10 @@
+import fastifyCookie from '@fastify/cookie';
 import { ValidationPipe } from '@nestjs/common';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test, TestingModule } from '@nestjs/testing';
 import { InjectOptions, LightMyRequestResponse } from 'fastify';
-import fastifyCookie from 'fastify-cookie';
 import { IncomingHttpHeaders } from 'http';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 
 import { AppModule } from '@drag/app.module';
 import { ValidationException } from '@drag/exceptions';
@@ -21,7 +21,7 @@ const mockedGoogleData = {
 jest.mock('googleapis', () => ({
   google: {
     auth: {
-      OAuth2: function () {
+      OAuth2() {
         this.setCredentials = () => {};
       },
     },
@@ -56,7 +56,7 @@ const tokens = {
 
 describe('Oauth', () => {
   let app: NestFastifyApplication;
-  let connection: Connection;
+  let dataSource: DataSource;
 
   beforeAll(async () => {
     const fastifyAdapter = new FastifyAdapter();
@@ -71,13 +71,13 @@ describe('Oauth', () => {
         exceptionFactory: (errors) => new ValidationException(errors),
       }),
     );
-    connection = app.get(Connection);
+    dataSource = app.get(DataSource);
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
   });
 
   afterEach(async () => {
-    await connection.synchronize(true);
+    await dataSource.synchronize(true);
   });
 
   const userLogin = (payload: Record<string, string> = { token: 'gToken' }) =>
@@ -92,17 +92,17 @@ describe('Oauth', () => {
   describe('/login/google POST', () => {
     it('Creates new user if not exist and return a jwt token in the response', async () => {
       const response = await userLogin();
-      const user = await connection
+      const user = await dataSource
         .getRepository(UserAccountEntity)
         .createQueryBuilder('user')
         .where('user.email = :email', { email: 'Ivan@mail.ru' })
         .getOne();
-      const userSocialCredentials = await connection
+      const userSocialCredentials = await dataSource
         .getRepository(UserSocialCredentialsEntity)
         .createQueryBuilder('user')
         .where('user.provider_user_id = :providerUserId', { providerUserId: '1' })
         .getOne();
-      const refreshToken = await connection
+      const refreshToken = await dataSource
         .getRepository(RefreshTokenEntity)
         .createQueryBuilder('token')
         .where('token.user_account_id = :userId', { userId: user?.id })
@@ -116,11 +116,10 @@ describe('Oauth', () => {
     });
 
     it('Authenticates a user if exists and return a jwt token in the response', async () => {
-      // ARRANGE
       await userLogin();
-      // ACT
+
       const response = await userLogin();
-      // ASSERT
+
       expect(response.json()).toEqual(tokens);
       expect(response.statusCode).toBe(201);
     });

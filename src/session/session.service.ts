@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as crypto from 'crypto';
-import { Connection, QueryRunner, Repository } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 
 import { SessionUserDto } from '@drag/session/dto';
@@ -14,7 +14,7 @@ const MAX_SESSIONS = 5;
 @Injectable()
 export class SessionService {
   constructor(
-    private connection: Connection,
+    private dataSource: DataSource,
     @InjectRepository(SessionEntity)
     private readonly sessionRepository: Repository<SessionEntity>,
   ) {}
@@ -25,7 +25,7 @@ export class SessionService {
 
   private static async getExcessSessions(userAccountId: string, queryRunner: QueryRunner) {
     const [sessions, sessionsCount] = await queryRunner.manager.findAndCount(SessionEntity, {
-      userAccountId,
+      where: { userAccountId },
     });
     if (sessionsCount === MAX_SESSIONS) {
       return sessions;
@@ -39,22 +39,22 @@ export class SessionService {
   }
 
   async getSessionUserById(sessionId: string): Promise<SessionUserDto> {
-    const { userAccount } = await this.sessionRepository.findOneOrFail(
-      { sessionId },
-      { relations: ['userAccount'] },
-    );
+    const { userAccount } = await this.sessionRepository.findOneOrFail({
+      where: { sessionId },
+      relations: ['userAccount'],
+    });
     return this.serializeUerSession(userAccount);
   }
 
   async getSessionById(sessionId: string) {
-    return this.sessionRepository.findOneOrFail({ sessionId });
+    return this.sessionRepository.findOneOrFail({ where: { sessionId } });
   }
 
   async createSession(
     userAccount: UserAccountEntity,
     userIdentity: UserIdentity,
   ): Promise<{ sessionUser: SessionUserDto; sessionId: string }> {
-    const queryRunner = this.connection.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();
     await queryRunner.startTransaction();

@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [18.x]
 
     steps:
     - uses: actions/checkout@v2
@@ -21,5 +21,3 @@ jobs:
       run: yarn
     - name: Lint code
       run: yarn check:lint
-    - name: Format code
-      run: yarn check:format

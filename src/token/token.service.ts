@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Connection, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { v1 as uuid } from 'uuid';
 
 import { Config } from '@drag/config';
@@ -17,7 +17,7 @@ export class TokenService {
   private readonly accessTokenTtl: number;
   private readonly refreshTokenTtl: number;
   constructor(
-    private connection: Connection,
+    private dataSource: DataSource,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<Config>,
     @InjectRepository(RefreshTokenEntity)
@@ -27,27 +27,23 @@ export class TokenService {
     this.refreshTokenTtl = this.configService.get<number>('jwt.refreshTokenTtl', { infer: true });
   }
 
-  private createToken(payload: string | Record<string, unknown> | Buffer, expiresIn: number) {
-    return this.jwtService.sign(payload, { expiresIn, jwtid: uuid() });
-  }
-
-  private createAccessToken(payload: string | Record<string, unknown> | Buffer) {
-    return this.createToken(payload, this.accessTokenTtl);
-  }
-
-  private createRefreshToken(payload: string | Record<string, unknown> | Buffer) {
-    return this.createToken(payload, this.refreshTokenTtl);
-  }
-
   private createTokensByUserID(userId: string) {
     const random = Math.random();
-    const accessToken = this.createAccessToken({ userId, random });
-    const refreshToken = this.createRefreshToken({ userId, random });
+    const payload = { userId, random };
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: this.accessTokenTtl,
+      jwtid: uuid(),
+    });
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: this.refreshTokenTtl,
+      jwtid: uuid(),
+    });
+
     return { accessToken, refreshToken };
   }
 
   private async refreshUserTokens(currentToken: RefreshTokenEntity, userIdentity: UserIdentity) {
-    const queryRunner = this.connection.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -81,7 +77,7 @@ export class TokenService {
   }
 
   private getCurrentRefreshToken(refreshToken: string) {
-    return this.refreshTokenRepository.findOne({ refreshToken });
+    return this.refreshTokenRepository.findOne({ where: { refreshToken } });
   }
 
   verifyToken(token: string) {

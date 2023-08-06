@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Connection, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { generateRandomPaletteColor } from '@drag/shared/constants';
 
@@ -10,7 +10,7 @@ import { UserWithSocialCredentials } from './interfaces';
 @Injectable()
 export class UsersService {
   constructor(
-    private connection: Connection,
+    private dataSource: DataSource,
     @InjectRepository(UserAccountEntity)
     private readonly userAccountRepository: Repository<UserAccountEntity>,
     @InjectRepository(UserSocialCredentialsEntity)
@@ -24,7 +24,7 @@ export class UsersService {
     providerType,
     providerUserId,
   }: UserWithSocialCredentials) {
-    const queryRunner = this.connection.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -59,10 +59,10 @@ export class UsersService {
   }
 
   findById(id: string) {
-    return this.userAccountRepository.findOne(id);
+    return this.userAccountRepository.findOne({ where: { id } });
   }
 
   findByEmail(email: string) {
-    return this.userAccountRepository.findOne({ email });
+    return this.userAccountRepository.findOne({ where: { email } });
   }
 }

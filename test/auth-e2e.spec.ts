@@ -1,10 +1,10 @@
+import fastifyCookie from '@fastify/cookie';
 import { ValidationPipe } from '@nestjs/common';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test, TestingModule } from '@nestjs/testing';
 import { InjectOptions, LightMyRequestResponse } from 'fastify';
-import fastifyCookie from 'fastify-cookie';
 import { IncomingHttpHeaders } from 'http';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 
 import { AppModule } from '@drag/app.module';
 import { ValidationException } from '@drag/exceptions';
@@ -25,7 +25,7 @@ jest.mock('googleapis', () => ({
   google: {
     auth: {
       JWT: '123',
-      OAuth2: function () {
+      OAuth2() {
         this.setCredentials = () => {};
       },
     },
@@ -43,7 +43,7 @@ const request = (
   url: string,
   payload: Record<string, string>,
   headers: IncomingHttpHeaders = {},
-  cookies?: Record<string, any>,
+  cookies?: Record<string, string>,
 ): InjectOptions => ({
   method: 'POST',
   headers: {
@@ -66,7 +66,7 @@ const mockedUser = {
 
 describe('Auth', () => {
   let app: NestFastifyApplication;
-  let connection: Connection;
+  let dataSource: DataSource;
 
   beforeAll(async () => {
     const fastifyAdapter = new FastifyAdapter();
@@ -81,22 +81,22 @@ describe('Auth', () => {
         exceptionFactory: (errors) => new ValidationException(errors),
       }),
     );
-    connection = app.get(Connection);
+    dataSource = app.get(DataSource);
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
   });
 
   afterEach(async () => {
-    await connection.synchronize(true);
+    await dataSource.synchronize(true);
   });
 
   const userLogin = (payload: Record<string, string> = { token: 'gToken' }) =>
     app.inject(request('/auth/login/google', payload));
-  const getCurrentSession = (cookies?: Record<string, any>) =>
+  const getCurrentSession = (cookies?: Record<string, string>) =>
     app.inject(request('/auth/session', {}, {}, cookies));
-  const logout = (cookies?: Record<string, any>) =>
+  const logout = (cookies?: Record<string, string>) =>
     app.inject(request('/auth/logout', {}, {}, cookies));
-  const logoutAll = (cookies?: Record<string, any>) =>
+  const logoutAll = (cookies?: Record<string, string>) =>
     app.inject(request('/auth/logout-all', {}, {}, cookies));
 
   afterAll(async () => {
@@ -107,17 +107,17 @@ describe('Auth', () => {
     it('Creates new user if not exist and returns sessionId and user data in the response', async () => {
       const response = await userLogin();
       const cookie = response.cookies[0];
-      const user = await connection
+      const user = await dataSource
         .getRepository(UserAccountEntity)
         .createQueryBuilder('user')
         .where('user.email = :email', { email })
         .getOne();
-      const userSocialCredentials = await connection
+      const userSocialCredentials = await dataSource
         .getRepository(UserSocialCredentialsEntity)
         .createQueryBuilder('user')
         .where('user.provider_user_id = :providerUserId', { providerUserId: '1' })
         .getOne();
-      const session = await connection
+      const session = await dataSource
         .getRepository(SessionEntity)
         .createQueryBuilder('session')
         .where('session.user_account_id = :userId', { userId: user?.id })
@@ -148,19 +148,19 @@ describe('Auth', () => {
       await userLogin({ token: 'gToken' });
       await userLogin({ token: 'gToken' });
       await userLogin({ token: 'gToken' });
-      const user = await connection
+      const user = await dataSource
         .getRepository(UserAccountEntity)
         .createQueryBuilder('user')
         .where('user.email = :email', { email })
         .getOne();
-      let sessionCount = await connection
+      let sessionCount = await dataSource
         .getRepository(SessionEntity)
         .createQueryBuilder('session')
         .where('session.user_account_id = :userId', { userId: user?.id })
         .getCount();
       expect(sessionCount).toBe(5);
       await userLogin();
-      sessionCount = await connection
+      sessionCount = await dataSource
         .getRepository(SessionEntity)
         .createQueryBuilder('session')
         .where('session.user_account_id = :userId', { userId: user?.id })
@@ -181,7 +181,7 @@ describe('Auth', () => {
     });
 
     it('Return current user data', async () => {
-      const cookie = loginResponse.cookies[0] as Record<string, unknown>;
+      const cookie = loginResponse.cookies[0];
       const response = await getCurrentSession({ sessionId: cookie.value });
 
       expect(response.json()).toEqual(mockedUser);
@@ -202,7 +202,7 @@ describe('Auth', () => {
     });
 
     it('Delete current session', async () => {
-      const cookie = loginResponse.cookies[0] as Record<string, unknown>;
+      const cookie = loginResponse.cookies[0];
       const response = await logout({ sessionId: cookie.value });
       expect(response.cookies[0]).toEqual(expect.objectContaining({ value: '' }));
     });
@@ -224,14 +224,14 @@ describe('Auth', () => {
       await userLogin();
       await userLogin();
       await userLogin();
-      const cookie = loginResponse.cookies[0] as Record<string, unknown>;
-      const user = await connection
+      const cookie = loginResponse.cookies[0];
+      const user = await dataSource
         .getRepository(UserAccountEntity)
         .createQueryBuilder('user')
         .where('user.email = :email', { email })
         .getOne();
       const response = await logoutAll({ sessionId: cookie.value });
-      const sessionCount = await connection
+      const sessionCount = await dataSource
         .getRepository(RefreshTokenEntity)
         .createQueryBuilder('token')
         .where('token.user_account_id = :userId', { userId: user?.id })

@@ -40,6 +40,7 @@ export class AuthController {
     const userIdentity = { ip, userAgent };
     const user = await this.authService.authGoogle(loginDto);
     const { sessionUser, sessionId } = await this.sessionService.createSession(user, userIdentity);
+
     response.setCookie(SESSION_ID, sessionId, { httpOnly: true, path: '/' });
 
     return sessionUser;
