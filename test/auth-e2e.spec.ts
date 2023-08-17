@@ -8,9 +8,9 @@ import { DataSource } from 'typeorm';
 
 import { AppModule } from '@drag/app.module';
 import { ValidationException } from '@drag/exceptions';
-import { SessionEntity } from '@drag/session/entities/session.entity';
-import { RefreshTokenEntity } from '@drag/token/entities';
-import { UserAccountEntity, UserSocialCredentialsEntity } from '@drag/users/entities';
+import { SessionEntity } from '@drag/modules/session/entities/session.entity';
+import { RefreshTokenEntity } from '@drag/modules/token/entities';
+import { UserAccountEntity, UserSocialCredentialsEntity } from '@drag/modules/users/entities';
 
 const email = 'Ivan@mail.ru';
 

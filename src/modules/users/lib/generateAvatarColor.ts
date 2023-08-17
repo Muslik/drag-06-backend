@@ -1,6 +1,6 @@
 import { randomInt } from 'crypto';
 
-export const colorPalette = {
+const colorPalette = {
   red500: '#f44336',
   red600: '#e53935',
   red700: '#d32f2f',
@@ -88,7 +88,7 @@ export const colorPalette = {
 
 const COLORS = Object.values(colorPalette);
 
-export const generateRandomPaletteColor = () => {
+export const generateAvatarColor = () => {
   const randomNumber = randomInt(0, COLORS.length - 1);
 
   return COLORS[randomNumber];
