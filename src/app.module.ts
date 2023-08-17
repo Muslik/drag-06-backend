@@ -1,45 +1,48 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import * as Joi from 'joi';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
-import { Config } from '@drag/config';
+import { AuthModule } from '@modules/auth/auth.module';
+import { AuthGuard } from '@modules/auth/guards/auth.guard';
+import { OauthModule } from '@modules/oauth/oauth.module';
+import { SessionModule } from '@modules/session/session.module';
+import { TokenModule } from '@modules/token/token.module';
+import { UsersModule } from '@modules/users/users.module';
 
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
-import { AuthGuard } from './auth/guards/auth.guard';
-import { config } from './config';
-import { ExceptionsModule } from './exceptions/exceptions.module';
-import { OauthModule } from './oauth/oauth.module';
-import { SessionModule } from './session/session.module';
-import { TokenModule } from './token/token.module';
-import { UsersModule } from './users/users.module';
+import { config, Config, configValidationScheme, NODE_ENV } from './config';
+import { GlobalExceptionFilter } from './libs/application/filters/exception.filter';
+import { ExceptionInterceptor } from './libs/application/interceptors/exception.interceptor';
 
-const ENV = process.env.NODE_ENV;
+const interceptors = [
+  {
+    provide: APP_INTERCEPTOR,
+    useClass: ExceptionInterceptor,
+  },
+];
+
+const filters = [
+  {
+    provide: APP_FILTER,
+    useClass: GlobalExceptionFilter,
+  },
+];
+
+const guards = [
+  {
+    provide: APP_GUARD,
+    useClass: AuthGuard,
+  },
+];
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       load: [config],
       isGlobal: true,
-      envFilePath: ENV === 'production' ? '.env' : `.env.${ENV}`,
-      validationSchema: Joi.object({
-        NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
-        DATABASE_HOST: Joi.string().default('localhost'),
-        DATABASE_PORT: Joi.number().default(5432),
-        DATABASE_USER: Joi.string().required(),
-        DATABASE_NAME: Joi.string().required(),
-        DATABASE_PASSWORD: Joi.string().required(),
-        GOOGLE_CLIENT_ID: Joi.string().required(),
-        GOOGLE_CLIENT_SECRET: Joi.string().required(),
-        JWT_SECRET_KEY: Joi.string().required(),
-        JWT_ACCESS_TOKEN_TTL: Joi.number().required(),
-        JWT_REFRESH_TOKEN_TTL: Joi.number().required(),
-        JWT_ISSUER: Joi.string().required(),
-      }),
+      envFilePath: NODE_ENV === 'production' ? '.env' : `.env.${NODE_ENV}`,
+      validationSchema: configValidationScheme,
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -61,17 +64,9 @@ const ENV = process.env.NODE_ENV;
     AuthModule,
     UsersModule,
     TokenModule,
-    ExceptionsModule.forRoot(),
     SessionModule,
     OauthModule,
   ],
-  controllers: [AppController],
-  providers: [
-    AppService,
-    {
-      provide: APP_GUARD,
-      useClass: AuthGuard,
-    },
-  ],
+  providers: [...interceptors, ...filters, ...guards],
 })
 export class AppModule {}

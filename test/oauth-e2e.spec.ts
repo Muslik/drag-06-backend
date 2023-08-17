@@ -8,8 +8,8 @@ import { DataSource } from 'typeorm';
 
 import { AppModule } from '@drag/app.module';
 import { ValidationException } from '@drag/exceptions';
-import { RefreshTokenEntity } from '@drag/token/entities';
-import { UserAccountEntity, UserSocialCredentialsEntity } from '@drag/users/entities';
+import { RefreshTokenEntity } from '@drag/modules/token/entities';
+import { UserAccountEntity, UserSocialCredentialsEntity } from '@drag/modules/users/entities';
 
 const mockedGoogleData = {
   id: '1',

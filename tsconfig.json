@@ -1,8 +1,11 @@
 {
   "compilerOptions": {
-    "baseUrl": "./src",
+    "baseUrl": "./",
     "paths": {
-      "@drag/*": ["./*"]
+      "@src/*": ["src/*"],
+      "@modules/*": ["src/modules/*"],
+      "@libs/*": ["src/libs/*"],
+      "@tests/*": ["tests/*"]
     },
     "module": "commonjs",
     "declaration": true,
