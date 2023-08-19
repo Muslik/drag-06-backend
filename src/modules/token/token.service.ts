@@ -1,19 +1,19 @@
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { JwtService } from "@nestjs/jwt";
-import { InjectRepository } from "@nestjs/typeorm";
-import * as O from "fp-ts/Option";
-import * as TE from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/lib/function";
-import { DataSource, Repository } from "typeorm";
-import { v1 as uuid } from "uuid";
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Either, left, right } from '@sweet-monads/either';
+import { from, Maybe, none, fromNullable } from '@sweet-monads/maybe';
+import { DataSource, Repository } from 'typeorm';
+import { v1 as uuid } from 'uuid';
 
-import { Config } from "@src/config";
-import { UserIdentity } from "@libs/decorators";
+import { Config } from '@src/config';
 
-import { RefreshTokenEntity } from "./entities";
-import { JWTPayload, Token } from "./interfaces";
-import { RefreshTokenInvalidError } from "./token.errors";
+import { UserIdentity } from '@libs/decorators';
+
+import { RefreshTokenEntity } from './entities';
+import { JWTPayload, Token } from './interfaces';
+import { RefreshTokenInvalidError } from './token.errors';
 
 @Injectable()
 export class TokenService {
@@ -26,13 +26,10 @@ export class TokenService {
     @InjectRepository(RefreshTokenEntity)
     private readonly refreshTokenRepository: Repository<RefreshTokenEntity>
   ) {
-    this.accessTokenTtl = this.configService.get<number>("jwt.accessTokenTtl", {
+    this.accessTokenTtl = this.configService.get<number>('jwt.accessTokenTtl', {
       infer: true,
     });
-    this.refreshTokenTtl = this.configService.get<number>(
-      "jwt.refreshTokenTtl",
-      { infer: true }
-    );
+    this.refreshTokenTtl = this.configService.get<number>('jwt.refreshTokenTtl', { infer: true });
   }
 
   private createTokensByUserID(userId: string): Token {
@@ -50,10 +47,7 @@ export class TokenService {
     return { accessToken, refreshToken };
   }
 
-  private async refreshUserTokens(
-    currentToken: RefreshTokenEntity,
-    userIdentity: UserIdentity
-  ): Promise<Token> {
+  private async refreshUserTokens(currentToken: RefreshTokenEntity, userIdentity: UserIdentity): Promise<Token> {
     return this.dataSource.transaction(async (transactionEntityManager) => {
       transactionEntityManager.remove(currentToken);
 
@@ -61,12 +55,7 @@ export class TokenService {
     });
   }
 
-  private async saveUserToken(
-    userId: string,
-    refreshToken: string,
-    expires: number,
-    { userAgent, ip }: UserIdentity
-  ) {
+  private async saveUserToken(userId: string, refreshToken: string, expires: number, { userAgent, ip }: UserIdentity) {
     const newRefreshToken = this.refreshTokenRepository.create({
       refreshToken,
       userAgent,
@@ -77,45 +66,44 @@ export class TokenService {
     await this.refreshTokenRepository.save(newRefreshToken);
   }
 
-  private async getCurrentRefreshToken(
-    refreshToken: string
-  ): Promise<O.Option<RefreshTokenEntity>> {
-    return O.fromNullable(
-      await this.refreshTokenRepository.findOne({ where: { refreshToken } })
-    );
+  private async getCurrentRefreshToken(refreshToken: string): Promise<Maybe<RefreshTokenEntity>> {
+    return fromNullable(await this.refreshTokenRepository.findOne({ where: { refreshToken } }));
   }
 
-  verifyToken(token: string): JWTPayload {
-    return this.jwtService.verify<JWTPayload>(token);
+  verifyToken(token: string): Maybe<JWTPayload> {
+    try {
+      const data = this.jwtService.verify<JWTPayload>(token);
+
+      return from(data);
+    } catch (error) {
+      return none();
+    }
   }
 
   async getRefreshedUserTokens(
     refreshToken: string,
     userIdentity: UserIdentity
-  ): Promise<TE.TaskEither<RefreshTokenInvalidError, Token>> {
-    this.verifyToken(refreshToken);
+  ): Promise<Either<RefreshTokenInvalidError, Token>> {
+    const tokenData = this.verifyToken(refreshToken);
 
-    return pipe(
-      await this.getCurrentRefreshToken(refreshToken),
-      O.fold(
-        () => TE.left(new RefreshTokenInvalidError()),
-        (token) =>
-          TE.fromTask(() => this.refreshUserTokens(token, userIdentity))
-      )
+    if (tokenData.isNone()) {
+      return left(new RefreshTokenInvalidError());
+    }
+
+    const currentRefresh = await this.getCurrentRefreshToken(refreshToken).then((maybe) =>
+      maybe.asyncMap((token) => {
+        return this.refreshUserTokens(token, userIdentity);
+      })
     );
+
+    return currentRefresh.isJust() ? right(currentRefresh.value) : left(new RefreshTokenInvalidError());
   }
 
-  async getUserTokens(
-    userId: string,
-    userIdentity: UserIdentity
-  ): Promise<Token> {
+  async getUserTokens(userId: string, userIdentity: UserIdentity): Promise<Token> {
     const tokens = this.createTokensByUserID(userId);
-    const { exp: expires } = this.verifyToken(tokens.refreshToken);
-    await this.saveUserToken(
-      userId,
-      tokens.refreshToken,
-      expires,
-      userIdentity
+
+    await this.verifyToken(tokens.refreshToken).asyncMap(({ exp: expires }) =>
+      this.saveUserToken(userId, tokens.refreshToken, expires, userIdentity)
     );
 
     return tokens;

@@ -1,18 +1,13 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-} from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import * as O from "fp-ts/Option";
-import { pipe } from "fp-ts/lib/function";
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { none, Maybe, merge } from '@sweet-monads/maybe';
 
-import { IS_PUBLIC_KEY } from "@libs/decorators";
+import { IS_PUBLIC_KEY } from '@libs/decorators';
 
-import { SessionService } from "@modules/session/session.service";
-import { TokenService } from "@modules/token/token.service";
+import { SessionService } from '@modules/session/session.service';
+import { TokenService } from '@modules/token/token.service';
 
-import { UnauthorizedError } from "../auth.errors";
+import { UnauthorizedError } from '../auth.errors';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -22,25 +17,22 @@ export class AuthGuard implements CanActivate {
     protected readonly tokenService: TokenService
   ) {}
 
-  private async getUserIdFromSessionId(
-    sessionId: string
-  ): Promise<O.Option<string>> {
+  private async getUserIdFromSessionId(sessionId: string): Promise<Maybe<string>> {
     if (!sessionId) {
-      return O.none;
+      return none();
     }
 
-    return pipe(
-      await this.sessionService.getSessionById(sessionId),
-      O.map(({ userAccountId }) => userAccountId)
-    );
+    return this.sessionService
+      .getSessionById(sessionId)
+      .then((maybe) => maybe.map(({ userAccountId }) => userAccountId));
   }
 
-  private getUserIdFromAccessToken(accessToken: string): O.Option<string> {
+  private getUserIdFromAccessToken(accessToken: string): Maybe<string> {
     if (!accessToken) {
-      return O.none;
+      return none();
     }
 
-    return O.tryCatch(() => this.tokenService.verifyToken(accessToken).userId);
+    return this.tokenService.verifyToken(accessToken).map(({ userId }) => userId);
   }
 
   async canActivate(context: ExecutionContext) {
@@ -56,19 +48,21 @@ export class AuthGuard implements CanActivate {
     const cookieSessionId = request.cookies.sessionId;
     const headerAccessToken = request.headers.authorization;
 
-    return pipe(
-      await this.getUserIdFromSessionId(cookieSessionId),
-      O.fold(() => this.getUserIdFromAccessToken(headerAccessToken), O.some),
-      O.fold(
-        () => {
-          throw new UnauthorizedError();
-        },
-        (userId) => {
-          request.userId = userId;
+    const userIdFromSession = await this.getUserIdFromSessionId(cookieSessionId);
+    const userIdFromAccessToken = this.getUserIdFromAccessToken(headerAccessToken);
 
-          return true;
+    return merge([userIdFromSession, userIdFromAccessToken])
+      .map((userIds) => {
+        const userId = userIds.filter(Boolean)[0];
+
+        if (!userId) {
+          throw new UnauthorizedError();
         }
-      )
-    );
+
+        request.userId = userId;
+
+        return true;
+      })
+      .unwrap(() => new UnauthorizedException());
   }
 }
