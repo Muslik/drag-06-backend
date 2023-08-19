@@ -18,7 +18,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - name: Install packages
-      run: yarn --frozen-lockfile
+      run: yarn --immutable
     - name: Lint code
       run: yarn check:lint
     - name: Build project
