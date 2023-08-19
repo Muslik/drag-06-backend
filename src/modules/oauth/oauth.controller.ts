@@ -7,8 +7,6 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import * as TE from 'fp-ts/TaskEither';
-import { pipe } from 'fp-ts/lib/function';
 
 import { ApiErrorResponse } from '@libs/api/api-error.response';
 import { Public, UserIdentity } from '@libs/decorators';
@@ -21,10 +19,7 @@ import { TokenService } from '@modules/token/token.service';
 @ApiTags('oauth')
 @Controller('oauth')
 export class OauthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly tokenService: TokenService
-  ) {}
+  constructor(private readonly authService: AuthService, private readonly tokenService: TokenService) {}
 
   @Public()
   @ApiOperation({ summary: 'Auth with google oauth token' })
@@ -33,16 +28,14 @@ export class OauthController {
   @ApiInternalServerErrorResponse({ description: 'Something went wrong' })
   @Post('login/google')
   async loginGoogle(@Body() loginDto: LoginGoogleDto, @UserIdentity() userIdentity: UserIdentity) {
-    return pipe(
-      await this.authService.getOrCreateUserByGoogleToken(loginDto),
-      TE.chain((user) => TE.fromTask(() => this.tokenService.getUserTokens(user.id, userIdentity))),
-      TE.match(
-        (error) => {
+    return this.authService
+      .getOrCreateUserByGoogleToken(loginDto)
+      .then((either) => either.asyncMap((user) => this.tokenService.getUserTokens(user.id, userIdentity)))
+      .then((either) =>
+        either.unwrap((error) => {
           throw error;
-        },
-        (token) => token
-      )
-    )();
+        })
+      );
   }
 
   @Public()
@@ -55,18 +48,11 @@ export class OauthController {
   @ApiUnauthorizedResponse({ description: 'User not authorized', type: ApiErrorResponse })
   @ApiInternalServerErrorResponse({ description: 'Something went wrong' })
   @Post('refresh-tokens')
-  async refreshTokens(
-    @UserIdentity() userIdentity: UserIdentity,
-    @Body() { refreshToken }: RefreshDto
-  ) {
-    return pipe(
-      await this.tokenService.getRefreshedUserTokens(refreshToken, userIdentity),
-      TE.match(
-        (error) => {
-          throw new UnauthorizedException(error.message);
-        },
-        (token) => token
-      )
-    )();
+  async refreshTokens(@UserIdentity() userIdentity: UserIdentity, @Body() { refreshToken }: RefreshDto) {
+    return this.tokenService.getRefreshedUserTokens(refreshToken, userIdentity).then((either) =>
+      either.unwrap((error) => {
+        throw error;
+      })
+    );
   }
 }

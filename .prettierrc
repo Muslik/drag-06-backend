@@ -3,7 +3,7 @@
   "singleQuote": true,
   "tabWidth": 2,
   "quoteProps": "consistent",
-  "printWidth": 100,
+  "printWidth": 120,
   "importOrder": ["<THIRD_PARTY_MODULES>", "^@src/(.*)$", "^@config/(.*)$", "^@libs/(.*)$", "^@modules/(.*)$", "^[./]"],
   "importOrderSeparation": true,
   "plugins": ["@trivago/prettier-plugin-sort-imports"],

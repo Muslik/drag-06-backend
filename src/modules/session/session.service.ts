@@ -1,15 +1,14 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import * as crypto from "crypto";
-import * as O from "fp-ts/Option";
-import { pipe } from "fp-ts/lib/function";
-import { DataSource, DeleteResult, EntityManager, Repository } from "typeorm";
-import { v4 as uuid } from "uuid";
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Maybe, fromNullable } from '@sweet-monads/maybe';
+import * as crypto from 'crypto';
+import { DataSource, DeleteResult, EntityManager, Repository } from 'typeorm';
+import { v4 as uuid } from 'uuid';
 
-import { UserIdentity } from "@src/libs/types/userIndentity";
+import { UserIdentity } from '@src/libs/types/userIndentity';
 
-import { SessionEntity, SessionUserDto } from "@modules/session";
-import { UserAccountEntity } from "@modules/users/entities";
+import { SessionEntity, SessionUserDto } from '@modules/session';
+import { UserAccountEntity } from '@modules/users/entities';
 
 const MAX_SESSIONS = 5;
 
@@ -22,23 +21,13 @@ export class SessionService {
   ) {}
 
   private generateSessionId = () => {
-    return crypto
-      .createHash("sha256")
-      .update(uuid())
-      .update(crypto.randomBytes(256))
-      .digest("hex");
+    return crypto.createHash('sha256').update(uuid()).update(crypto.randomBytes(256)).digest('hex');
   };
 
-  private static async getExcessSessions(
-    userAccountId: string,
-    manager: EntityManager
-  ) {
-    const [sessions, sessionsCount] = await manager.findAndCount(
-      SessionEntity,
-      {
-        where: { userAccountId },
-      }
-    );
+  private static async getExcessSessions(userAccountId: string, manager: EntityManager) {
+    const [sessions, sessionsCount] = await manager.findAndCount(SessionEntity, {
+      where: { userAccountId },
+    });
     if (sessionsCount === MAX_SESSIONS) {
       return sessions;
     }
@@ -47,32 +36,26 @@ export class SessionService {
   }
 
   private serializeUserSession(userAccount: UserAccountEntity): SessionUserDto {
-    const { id, username, email, firstName, lastName, avatarColor } =
-      userAccount;
+    const { id, username, email, firstName, lastName, avatarColor } = userAccount;
 
     return { id, username, email, firstName, lastName, avatarColor };
   }
 
-  async getSessionUserById(
-    sessionId: string
-  ): Promise<O.Option<SessionUserDto>> {
+  async getSessionUserById(sessionId: string): Promise<Maybe<SessionUserDto>> {
     const session = await this.sessionRepository.findOne({
       where: { sessionId },
-      relations: ["userAccount"],
+      relations: ['userAccount'],
     });
 
-    return pipe(
-      O.fromNullable(session),
-      O.map(({ userAccount }) => this.serializeUserSession(userAccount))
-    );
+    return fromNullable(session).map(({ userAccount }) => this.serializeUserSession(userAccount));
   }
 
-  async getSessionById(sessionId: string): Promise<O.Option<SessionEntity>> {
+  async getSessionById(sessionId: string): Promise<Maybe<SessionEntity>> {
     const session = await this.sessionRepository.findOne({
       where: { sessionId },
     });
 
-    return O.fromNullable(session);
+    return fromNullable(session);
   }
 
   async createSession(
@@ -86,10 +69,7 @@ export class SessionService {
         sessionId,
         ...userIdentity,
       });
-      const excessSessions = await SessionService.getExcessSessions(
-        userAccount.id,
-        transactionEntityManager
-      );
+      const excessSessions = await SessionService.getExcessSessions(userAccount.id, transactionEntityManager);
       if (excessSessions) {
         await transactionEntityManager.remove(excessSessions);
       }

@@ -45,3 +45,9 @@ export class ValidationException extends BadRequestException {
     super('VALIDATION_ERROR', 'Validation Failed!', errors.map(mapError));
   }
 }
+
+export class DatabaseError extends InternalServerErrorException {
+  constructor(error: unknown) {
+    super('DATABASE_ERROR', 'Database error', error)
+  }
+}

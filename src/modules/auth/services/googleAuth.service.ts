@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as TE from 'fp-ts/TaskEither';
+import { Either, left, right } from '@sweet-monads/either';
 import { google, Auth } from 'googleapis';
 
 import { Config } from '@src/config';
@@ -18,29 +18,26 @@ export class GoogleAuthService {
     this.oauthClient = new google.auth.OAuth2(this.clientID, this.clientSecret);
   }
 
-  async getUserInfo(
-    token: string
-  ): Promise<TE.TaskEither<InvalidTokenError, UserWithSocialCredentials>> {
-    return TE.tryCatch(
-      async () => {
-        this.oauthClient.setCredentials({
-          access_token: token,
-        });
-        const {
-          data: { email, id, family_name: lastName, given_name: firstName },
-        } = await google.oauth2('v2').userinfo.get({
-          auth: this.oauthClient,
-        });
+  async getUserInfo(token: string): Promise<Either<InvalidTokenError, UserWithSocialCredentials>> {
+    try {
+      this.oauthClient.setCredentials({
+        access_token: token,
+      });
+      const {
+        data: { email, id, family_name: lastName, given_name: firstName },
+      } = await google.oauth2('v2').userinfo.get({
+        auth: this.oauthClient,
+      });
 
-        return {
-          providerUserId: id ?? '',
-          email: email ?? '',
-          lastName: lastName ?? '',
-          firstName: firstName ?? '',
-          providerType: 'google',
-        };
-      },
-      () => new InvalidTokenError()
-    );
+      return right({
+        providerUserId: id ?? '',
+        email: email ?? '',
+        lastName: lastName ?? '',
+        firstName: firstName ?? '',
+        providerType: 'google',
+      });
+    } catch (error) {
+      return left(new InvalidTokenError());
+    }
   }
 }

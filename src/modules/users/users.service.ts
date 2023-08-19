@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import * as O from 'fp-ts/Option';
+import { Maybe, fromNullable } from '@sweet-monads/maybe';
 
 import { UserAccountEntity, UserSocialCredentialsEntity } from './entities';
 import { UserWithSocialCredentials } from './interfaces';
@@ -53,15 +53,16 @@ export class UsersService {
     return this.userAccountRepository.find();
   }
 
-  async findById(id: string): Promise<O.Option<UserAccountEntity>> {
+  async findById(id: string): Promise<Maybe<UserAccountEntity>> {
     const user = await this.userAccountRepository.findOne({ where: { id } });
 
-    return O.fromNullable(user);
+    return fromNullable(user);
   }
 
-  async findByEmail(email: string): Promise<O.Option<UserAccountEntity>> {
+  async findByEmail(email: string): Promise<Maybe<UserAccountEntity>> {
     const user = await this.userAccountRepository.findOne({ where: { email } });
 
-    return O.fromNullable(user);
+    return fromNullable(user);
   }
+
 }
