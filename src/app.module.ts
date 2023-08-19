@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -14,6 +14,7 @@ import { UsersModule } from '@modules/users/users.module';
 import { config, Config, configValidationScheme, NODE_ENV } from './config';
 import { GlobalExceptionFilter } from './libs/application/filters/exception.filter';
 import { ExceptionInterceptor } from './libs/application/interceptors/exception.interceptor';
+import { LoggerMiddleware } from './libs/middlewares/logger.middleware';
 
 const interceptors = [
   {
@@ -69,4 +70,8 @@ const guards = [
   ],
   providers: [...interceptors, ...filters, ...guards],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+}
