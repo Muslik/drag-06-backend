@@ -8,7 +8,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { ApiErrorResponse } from '@libs/api/api-error.response';
+import { ApiErrorResponse, ApiValidationErrorResponse } from '@libs/api/api-error.response';
 import { Public, UserIdentity } from '@libs/decorators';
 
 import { LoginGoogleDto } from '@modules/auth/dto';
@@ -19,13 +19,16 @@ import { TokenService } from '@modules/token/token.service';
 @ApiTags('oauth')
 @Controller('oauth')
 export class OauthController {
-  constructor(private readonly authService: AuthService, private readonly tokenService: TokenService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly tokenService: TokenService,
+  ) {}
 
   @Public()
   @ApiOperation({ summary: 'Auth with google oauth token' })
   @ApiCreatedResponse({ description: 'User successfully authorized', type: JWTTokensDto })
-  @ApiBadRequestResponse({ description: 'Bad request', type: ApiErrorResponse })
-  @ApiInternalServerErrorResponse({ description: 'Something went wrong' })
+  @ApiBadRequestResponse({ description: 'Bad request', type: ApiValidationErrorResponse })
+  @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
   @Post('login/google')
   async loginGoogle(@Body() loginDto: LoginGoogleDto, @UserIdentity() userIdentity: UserIdentity) {
     return this.authService
@@ -34,7 +37,7 @@ export class OauthController {
       .then((either) =>
         either.unwrap((error) => {
           throw error;
-        })
+        }),
       );
   }
 
@@ -44,15 +47,15 @@ export class OauthController {
     description: 'Successfully refreshed',
     type: JWTTokensDto,
   })
-  @ApiBadRequestResponse({ description: 'Bad request', type: ApiErrorResponse })
+  @ApiBadRequestResponse({ description: 'Bad request', type: ApiValidationErrorResponse })
   @ApiUnauthorizedResponse({ description: 'User not authorized', type: ApiErrorResponse })
-  @ApiInternalServerErrorResponse({ description: 'Something went wrong' })
+  @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
   @Post('refresh-tokens')
   async refreshTokens(@UserIdentity() userIdentity: UserIdentity, @Body() { refreshToken }: RefreshDto) {
     return this.tokenService.getRefreshedUserTokens(refreshToken, userIdentity).then((either) =>
       either.unwrap((error) => {
         throw error;
-      })
+      }),
     );
   }
 }

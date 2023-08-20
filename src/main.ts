@@ -1,13 +1,11 @@
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
-import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
 import { NODE_ENV } from './config';
-import { ValidationException } from './libs/exceptions';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(), {
@@ -19,11 +17,6 @@ async function bootstrap() {
     .setVersion('1.0')
     .addTag('auth')
     .build();
-  app.useGlobalPipes(
-    new ValidationPipe({
-      exceptionFactory: (errors) => new ValidationException(errors),
-    })
-  );
   app.register(fastifyCookie);
   app.register(fastifyCors, { origin: true, credentials: true });
   const document = SwaggerModule.createDocument(app, config);

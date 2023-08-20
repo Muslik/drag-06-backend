@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Either, left, right } from '@sweet-monads/either';
 import { from, Maybe, none, fromNullable } from '@sweet-monads/maybe';
-import { DataSource, Repository } from 'typeorm';
+import { Equal, DataSource, Repository } from 'typeorm';
 import { v1 as uuid } from 'uuid';
 
 import { Config } from '@src/config';
@@ -24,7 +24,7 @@ export class TokenService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<Config>,
     @InjectRepository(RefreshTokenEntity)
-    private readonly refreshTokenRepository: Repository<RefreshTokenEntity>
+    private readonly refreshTokenRepository: Repository<RefreshTokenEntity>,
   ) {
     this.accessTokenTtl = this.configService.get<number>('jwt.accessTokenTtl', {
       infer: true,
@@ -67,7 +67,7 @@ export class TokenService {
   }
 
   private async getCurrentRefreshToken(refreshToken: string): Promise<Maybe<RefreshTokenEntity>> {
-    return fromNullable(await this.refreshTokenRepository.findOne({ where: { refreshToken } }));
+    return fromNullable(await this.refreshTokenRepository.findOne({ where: { refreshToken: Equal(refreshToken) } }));
   }
 
   verifyToken(token: string): Maybe<JWTPayload> {
@@ -82,7 +82,7 @@ export class TokenService {
 
   async getRefreshedUserTokens(
     refreshToken: string,
-    userIdentity: UserIdentity
+    userIdentity: UserIdentity,
   ): Promise<Either<RefreshTokenInvalidError, Token>> {
     const tokenData = this.verifyToken(refreshToken);
 
@@ -93,7 +93,7 @@ export class TokenService {
     const currentRefresh = await this.getCurrentRefreshToken(refreshToken).then((maybe) =>
       maybe.asyncMap((token) => {
         return this.refreshUserTokens(token, userIdentity);
-      })
+      }),
     );
 
     return currentRefresh.isJust() ? right(currentRefresh.value) : left(new RefreshTokenInvalidError());
@@ -103,7 +103,7 @@ export class TokenService {
     const tokens = this.createTokensByUserID(userId);
 
     await this.verifyToken(tokens.refreshToken).asyncMap(({ exp: expires }) =>
-      this.saveUserToken(userId, tokens.refreshToken, expires, userIdentity)
+      this.saveUserToken(userId, tokens.refreshToken, expires, userIdentity),
     );
 
     return tokens;

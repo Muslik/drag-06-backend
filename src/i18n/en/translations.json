@@ -1,0 +1,11 @@
+{
+  "validationFailed": "Validation failed",
+  "validation": {
+    "isString": "field is not a string",
+    "isNumber": "field is not a number",
+    "isNotEmpty": "field cannot be empty",
+    "isDate": "field is not a date",
+    "isEmail": "email is invalid",
+    "isIn": "field mUst be one of the following values: {constraints.0}"
+  }
+}

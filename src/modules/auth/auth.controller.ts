@@ -9,7 +9,7 @@ import {
 } from '@nestjs/swagger';
 import { FastifyReply } from 'fastify';
 
-import { ApiErrorResponse } from '@libs/api/api-error.response';
+import { ApiErrorResponse, ApiValidationErrorResponse } from '@libs/api/api-error.response';
 import { Cookies, Public, UserIdentity, UserId } from '@libs/decorators';
 
 import { SESSION_ID } from '@modules/auth/constants';
@@ -20,7 +20,10 @@ import { SessionService } from '@modules/session/session.service';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService, private readonly sessionService: SessionService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly sessionService: SessionService,
+  ) {}
 
   @Public()
   @ApiOperation({ summary: 'Auth with google oauth token' })
@@ -28,13 +31,13 @@ export class AuthController {
     description: 'User successfully authorized',
     type: SessionUserDto,
   })
-  @ApiBadRequestResponse({ description: 'Bad request', type: ApiErrorResponse })
-  @ApiInternalServerErrorResponse({ description: 'Something went wrong' })
+  @ApiBadRequestResponse({ description: 'Bad request', type: ApiValidationErrorResponse })
+  @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
   @Post('login/google')
   async loginGoogle(
     @Body() loginDto: LoginGoogleDto,
     @Res({ passthrough: true }) response: FastifyReply,
-    @UserIdentity() userIdentity: UserIdentity
+    @UserIdentity() userIdentity: UserIdentity,
   ) {
     return this.authService
       .getOrCreateUserByGoogleToken(loginDto)
@@ -42,13 +45,11 @@ export class AuthController {
       .then((either) =>
         either
           .mapRight(({ sessionUser, sessionId }) => {
-            response.setCookie(SESSION_ID, sessionId);
-
-            return sessionUser;
+            response.setCookie(SESSION_ID, sessionId, { httpOnly: true, path: '/' }).send(sessionUser);
           })
           .unwrap((error) => {
             throw error;
-          })
+          }),
       );
   }
 
@@ -58,12 +59,12 @@ export class AuthController {
     description: 'User not authorized',
     type: ApiErrorResponse,
   })
-  @ApiInternalServerErrorResponse({ description: 'Something went wrong' })
+  @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
   @Post('session')
   async getSessionUser(@Cookies() { sessionId }: Record<string, string>) {
     const session = await this.sessionService.getSessionUserById(sessionId);
 
-    return session.isJust() ? session.value : null
+    return session.isJust() ? session.value : null;
   }
 
   @ApiOperation({ summary: 'Delete current session' })
@@ -72,7 +73,7 @@ export class AuthController {
     description: 'User not authorized',
     type: ApiErrorResponse,
   })
-  @ApiInternalServerErrorResponse({ description: 'Something went wrong' })
+  @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
   @Post('logout')
   async logout(@Res({ passthrough: true }) response: FastifyReply, @Cookies() { sessionId }: Record<string, string>) {
     await this.sessionService.deleteSession(sessionId);
@@ -85,7 +86,7 @@ export class AuthController {
     description: 'User not authorized',
     type: ApiErrorResponse,
   })
-  @ApiInternalServerErrorResponse({ description: 'Something went wrong' })
+  @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
   @Post('logout-all')
   async logoutAll(@UserId() userId: string) {
     return this.sessionService.deleteAllSessions(userId);

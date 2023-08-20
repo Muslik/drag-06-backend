@@ -1,4 +1,5 @@
 import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
+import { I18nValidationException } from 'nestjs-i18n';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { TypeORMError } from 'typeorm';
@@ -7,7 +8,7 @@ import { DatabaseError, ExceptionBase, InternalServerErrorException } from '@lib
 
 export class UnexpectedException extends InternalServerErrorException {
   constructor(inner?: unknown) {
-    super('UNEXPECTED_EXCEPTION', 'Неизвестная ошибка', inner);
+    super('UNEXPECTED_EXCEPTION', 'Unexpected error', inner);
   }
 }
 
@@ -21,10 +22,14 @@ export class ExceptionInterceptor implements NestInterceptor {
           }
 
           if (err instanceof TypeORMError) {
+            console.log(err);
+
             return new DatabaseError(err);
           }
 
-          console.log('ERR', err);
+          if (err instanceof I18nValidationException) {
+            return err;
+          }
 
           return new UnexpectedException(err);
         });
@@ -36,7 +41,7 @@ export class ExceptionInterceptor implements NestInterceptor {
         }
 
         return data;
-      })
+      }),
     );
   }
 }

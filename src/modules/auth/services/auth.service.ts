@@ -12,14 +12,14 @@ export class AuthService {
   constructor(
     @Inject(forwardRef(() => GoogleAuthService))
     private readonly googleAuthService: GoogleAuthService,
-    private readonly usersService: UsersService
+    private readonly usersService: UsersService,
   ) {}
 
   async getOrCreateUserByGoogleToken(loginDto: LoginGoogleDto): Promise<Either<InvalidTokenError, UserAccountEntity>> {
     const googleUserInfoEither = await this.googleAuthService.getUserInfo(loginDto.token);
 
     const userEither = await googleUserInfoEither.asyncMap((googleUserInfo) =>
-      this.usersService.findByEmail(googleUserInfo.email)
+      this.usersService.findByEmail(googleUserInfo.email),
     );
 
     return merge([googleUserInfoEither, userEither]).asyncChain(async ([googleUserInfo, user]) => {

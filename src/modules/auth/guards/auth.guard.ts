@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { none, Maybe, merge } from '@sweet-monads/maybe';
+import { none, Maybe } from '@sweet-monads/maybe';
 
 import { IS_PUBLIC_KEY } from '@libs/decorators';
 
@@ -14,7 +14,7 @@ export class AuthGuard implements CanActivate {
   constructor(
     protected reflector: Reflector,
     protected readonly sessionService: SessionService,
-    protected readonly tokenService: TokenService
+    protected readonly tokenService: TokenService,
   ) {}
 
   private async getUserIdFromSessionId(sessionId: string): Promise<Maybe<string>> {
@@ -51,10 +51,9 @@ export class AuthGuard implements CanActivate {
     const userIdFromSession = await this.getUserIdFromSessionId(cookieSessionId);
     const userIdFromAccessToken = this.getUserIdFromAccessToken(headerAccessToken);
 
-    return merge([userIdFromSession, userIdFromAccessToken])
-      .map((userIds) => {
-        const userId = userIds.filter(Boolean)[0];
-
+    return userIdFromSession
+      .or(userIdFromAccessToken)
+      .map((userId) => {
         if (!userId) {
           throw new UnauthorizedError();
         }
