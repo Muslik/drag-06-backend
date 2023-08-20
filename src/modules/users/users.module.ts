@@ -8,10 +8,7 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
 @Module({
-  imports: [
-    TokenModule,
-    TypeOrmModule.forFeature([UserAccountEntity, UserSocialCredentialsEntity]),
-  ],
+  imports: [TokenModule, TypeOrmModule.forFeature([UserAccountEntity, UserSocialCredentialsEntity])],
   providers: [UsersService],
   exports: [UsersService],
   controllers: [UsersController],

@@ -4,4 +4,4 @@ export type UserWithSocialCredentials = {
   email: string;
   providerType: 'google';
   providerUserId: string;
-}
+};

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
 import { Maybe, fromNullable } from '@sweet-monads/maybe';
+import { Equal, DataSource, Repository } from 'typeorm';
 
 import { UserAccountEntity, UserSocialCredentialsEntity } from './entities';
 import { UserWithSocialCredentials } from './interfaces';
@@ -24,7 +24,6 @@ export class UsersService {
     providerType,
     providerUserId,
   }: UserWithSocialCredentials): Promise<UserAccountEntity> {
-
     return this.dataSource.transaction(async (transactionEntityManager) => {
       const avatarColor = generateAvatarColor();
 
@@ -46,7 +45,7 @@ export class UsersService {
       await transactionEntityManager.save(userSocialCredentials);
 
       return createdUser;
-    })
+    });
   }
 
   findAll(): Promise<UserAccountEntity[]> {
@@ -54,15 +53,14 @@ export class UsersService {
   }
 
   async findById(id: string): Promise<Maybe<UserAccountEntity>> {
-    const user = await this.userAccountRepository.findOne({ where: { id } });
+    const user = await this.userAccountRepository.findOne({ where: { id: Equal(id) } });
 
     return fromNullable(user);
   }
 
   async findByEmail(email: string): Promise<Maybe<UserAccountEntity>> {
-    const user = await this.userAccountRepository.findOne({ where: { email } });
+    const user = await this.userAccountRepository.findOne({ where: { email: Equal(email) } });
 
     return fromNullable(user);
   }
-
 }

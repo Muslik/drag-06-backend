@@ -1,7 +1,9 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { HeaderResolver, I18nModule, I18nValidationPipe, QueryResolver } from 'nestjs-i18n';
+import * as path from 'path';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 import { AuthModule } from '@modules/auth/auth.module';
@@ -15,6 +17,13 @@ import { config, Config, configValidationScheme, NODE_ENV } from './config';
 import { GlobalExceptionFilter } from './libs/application/filters/exception.filter';
 import { ExceptionInterceptor } from './libs/application/interceptors/exception.interceptor';
 import { LoggerMiddleware } from './libs/middlewares/logger.middleware';
+
+const pipes = [
+  {
+    provide: APP_PIPE,
+    useClass: I18nValidationPipe,
+  },
+];
 
 const interceptors = [
   {
@@ -39,6 +48,15 @@ const guards = [
 
 @Module({
   imports: [
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.join(__dirname, '/i18n/'),
+        watch: true,
+      },
+      typesOutputPath: path.join(__dirname, '../src/generated/i18n.generated.ts'),
+      resolvers: [{ use: QueryResolver, options: ['lang'] }, new HeaderResolver(['x-lang'])],
+    }),
     ConfigModule.forRoot({
       load: [config],
       isGlobal: true,
@@ -68,7 +86,7 @@ const guards = [
     SessionModule,
     OauthModule,
   ],
-  providers: [...interceptors, ...filters, ...guards],
+  providers: [...interceptors, ...filters, ...guards, ...pipes],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

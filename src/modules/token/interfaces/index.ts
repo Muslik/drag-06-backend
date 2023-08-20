@@ -3,9 +3,9 @@ export type JWTPayload = {
   iat: number;
   exp: number;
   iss: string;
-}
+};
 
 export type Token = {
   accessToken: string;
   refreshToken: string;
-}
+};

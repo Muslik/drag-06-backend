@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Maybe, fromNullable } from '@sweet-monads/maybe';
 import * as crypto from 'crypto';
-import { DataSource, DeleteResult, EntityManager, Repository } from 'typeorm';
+import { Equal, DataSource, DeleteResult, EntityManager, Repository } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 
 import { UserIdentity } from '@src/libs/types/userIndentity';
@@ -17,7 +17,7 @@ export class SessionService {
   constructor(
     private dataSource: DataSource,
     @InjectRepository(SessionEntity)
-    private readonly sessionRepository: Repository<SessionEntity>
+    private readonly sessionRepository: Repository<SessionEntity>,
   ) {}
 
   private generateSessionId = () => {
@@ -26,7 +26,7 @@ export class SessionService {
 
   private static async getExcessSessions(userAccountId: string, manager: EntityManager) {
     const [sessions, sessionsCount] = await manager.findAndCount(SessionEntity, {
-      where: { userAccountId },
+      where: { userAccountId: Equal(userAccountId) },
     });
     if (sessionsCount === MAX_SESSIONS) {
       return sessions;
@@ -43,7 +43,7 @@ export class SessionService {
 
   async getSessionUserById(sessionId: string): Promise<Maybe<SessionUserDto>> {
     const session = await this.sessionRepository.findOne({
-      where: { sessionId },
+      where: { sessionId: Equal(sessionId) },
       relations: ['userAccount'],
     });
 
@@ -52,7 +52,7 @@ export class SessionService {
 
   async getSessionById(sessionId: string): Promise<Maybe<SessionEntity>> {
     const session = await this.sessionRepository.findOne({
-      where: { sessionId },
+      where: { sessionId: Equal(sessionId) },
     });
 
     return fromNullable(session);
@@ -60,7 +60,7 @@ export class SessionService {
 
   async createSession(
     userAccount: UserAccountEntity,
-    userIdentity: UserIdentity
+    userIdentity: UserIdentity,
   ): Promise<{ sessionUser: SessionUserDto; sessionId: string }> {
     return this.dataSource.transaction(async (transactionEntityManager) => {
       const sessionId = this.generateSessionId();
@@ -83,10 +83,10 @@ export class SessionService {
   }
 
   deleteSession(sessionId: string): Promise<DeleteResult> {
-    return this.sessionRepository.delete({ sessionId });
+    return this.sessionRepository.delete({ sessionId: Equal(sessionId) });
   }
 
   deleteAllSessions(userAccountId: string): Promise<DeleteResult> {
-    return this.sessionRepository.delete({ userAccountId });
+    return this.sessionRepository.delete({ userAccountId: Equal(userAccountId) });
   }
 }
