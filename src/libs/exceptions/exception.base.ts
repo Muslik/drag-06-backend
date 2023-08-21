@@ -8,6 +8,6 @@ export abstract class ExceptionBase<T extends string = string> {
   ) {}
 
   toString(): string {
-    return `[${this.code}]: ${this.message}`
+    return `[${this.code}]: ${this.message}`;
   }
 }

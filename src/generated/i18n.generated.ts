@@ -7,6 +7,7 @@ export type I18nTranslations = {
         "validation": {
             "isString": string;
             "isNumber": string;
+            "isBoolean": string;
             "isNotEmpty": string;
             "isDate": string;
             "isEmail": string;
