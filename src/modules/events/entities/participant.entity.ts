@@ -69,6 +69,7 @@ export class ParticipantEntity {
 
   @ManyToOne(() => CarClassEntity, {
     nullable: true,
+    eager: true,
   })
   carClass: CarClassEntity | null;
 

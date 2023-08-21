@@ -50,10 +50,10 @@ export class EventEntity {
   @OneToMany(() => QualificationEntity, (qualification) => qualification.event, {
     onDelete: 'CASCADE',
   })
-  qualifications: QualificationEntity[];
+  qualifications?: QualificationEntity[];
 
   @OneToMany(() => ParticipantEntity, (participant) => participant.event, {
     onDelete: 'CASCADE',
   })
-  participants: ParticipantEntity[];
+  participants?: ParticipantEntity[];
 }
