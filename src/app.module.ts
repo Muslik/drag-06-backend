@@ -8,7 +8,9 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 import { AuthModule } from '@modules/auth/auth.module';
 import { AuthGuard } from '@modules/auth/guards/auth.guard';
+import { EventsModule } from '@modules/events/events.module';
 import { OauthModule } from '@modules/oauth/oauth.module';
+import { ReferencesModule } from '@modules/references/references.module';
 import { SessionModule } from '@modules/session/session.module';
 import { TokenModule } from '@modules/token/token.module';
 import { UsersModule } from '@modules/users/users.module';
@@ -85,6 +87,8 @@ const guards = [
     TokenModule,
     SessionModule,
     OauthModule,
+    EventsModule,
+    ReferencesModule,
   ],
   providers: [...interceptors, ...filters, ...guards, ...pipes],
 })

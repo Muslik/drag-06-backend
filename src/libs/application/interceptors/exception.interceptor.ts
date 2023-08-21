@@ -1,4 +1,4 @@
-import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
+import { CallHandler, ExecutionContext, Logger, NestInterceptor } from '@nestjs/common';
 import { I18nValidationException } from 'nestjs-i18n';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -13,17 +13,17 @@ export class UnexpectedException extends InternalServerErrorException {
 }
 
 export class ExceptionInterceptor implements NestInterceptor {
+  private readonly logger: Logger = new Logger('Interceptor');
   intercept(_context: ExecutionContext, next: CallHandler): Observable<ExceptionBase> {
     return next.handle().pipe(
       catchError((err) => {
         return throwError(() => {
+          this.logger.debug(`[INTERCEPT]: `, err);
           if (err instanceof ExceptionBase) {
             return err;
           }
 
           if (err instanceof TypeORMError) {
-            console.log(err);
-
             return new DatabaseError(err);
           }
 
