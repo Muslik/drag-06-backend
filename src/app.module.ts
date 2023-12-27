@@ -11,8 +11,6 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 import { config, Config, configValidationScheme, NODE_ENV } from './config';
 import { AuthModule, AuthGuard } from './modules/auth';
-import { EventsModule } from './modules/events';
-import { ReferencesModule } from './modules/references';
 import { SessionModule, SessionService } from './modules/session';
 import { TokenModule, TokenService } from './modules/token';
 import { UsersModule, UsersService } from './modules/users';
@@ -91,8 +89,6 @@ const guards: Provider[] = [
     UsersModule,
     TokenModule,
     SessionModule,
-    /* EventsModule, */
-    /* ReferencesModule, */
   ],
   providers: [...interceptors, ...filters, ...guards, ...pipes],
 })

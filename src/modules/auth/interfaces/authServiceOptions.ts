@@ -1,4 +1,4 @@
-import { ModuleMetadata, Provider } from '@nestjs/common';
+import { FactoryProvider, ModuleMetadata } from '@nestjs/common';
 import { ISessionService } from 'src/modules/session';
 import { ITokenService } from 'src/modules/token';
 import { IUsersService } from 'src/modules/users';
@@ -10,7 +10,6 @@ export interface IAuthServiceOptions {
 }
 
 export interface AuthModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
-  useFactory: (...args: any[]) => Promise<IAuthServiceOptions> | IAuthServiceOptions;
-  inject?: any[];
-  extraProviders?: Provider[];
+  useFactory: FactoryProvider<IAuthServiceOptions>['useFactory'];
+  inject?: FactoryProvider['inject'];
 }

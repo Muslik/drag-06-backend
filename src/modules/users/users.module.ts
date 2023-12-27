@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 
-import { PermissionEntity } from './entities/permission.entity';
-import { RoleEntity } from './entities/role.entity';
 import { UserAccountEntity } from './entities/userAccount.entity';
 import { UserSocialCredentialsEntity } from './entities/userSocialCredentials.entity';
 import { UsersController } from './users.controller';

@@ -4,7 +4,6 @@ import { LogLevel } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { SpelunkerModule } from 'nestjs-spelunker';
 
 import { AppModule } from './app.module';
 import { NODE_ENV } from './config';
@@ -22,11 +21,6 @@ async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(), {
     logger: getLoggerType(),
   });
-  /* const tree = SpelunkerModule.explore(app); */
-  /* const root = SpelunkerModule.graph(tree); */
-  /* const edges = SpelunkerModule.findGraphEdges(root); */
-  /* const mermaidEdges = edges.map(({ from, to }) => `  ${from.module.name}-->${to.module.name}`); */
-  /* console.log(mermaidEdges.join('\n')); */
   const config = new DocumentBuilder()
     .setTitle('Drag06 API')
     .setDescription('This api for drag06')

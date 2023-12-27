@@ -1,8 +1,3 @@
-import { AppModule } from '@drag/app.module';
-import { ValidationException } from '@drag/exceptions';
-import { SessionEntity } from '@drag/modules/session/entities/session.entity';
-import { RefreshTokenEntity } from '@drag/modules/token/entities';
-import { UserAccountEntity, UserSocialCredentialsEntity } from '@drag/modules/users/entities';
 import fastifyCookie from '@fastify/cookie';
 import { ValidationPipe } from '@nestjs/common';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
@@ -10,6 +5,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { InjectOptions, LightMyRequestResponse } from 'fastify';
 import { IncomingHttpHeaders } from 'http';
 import { DataSource } from 'typeorm';
+
+import { AppModule } from 'src/app.module';
+import { SessionEntity } from 'src/modules/session';
+import { RefreshTokenEntity } from 'src/modules/token';
+import { UserAccountEntity, UserSocialCredentialsEntity } from 'src/modules/users';
 
 const email = 'Ivan@mail.ru';
 
@@ -75,11 +75,6 @@ describe.skip('Auth', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication(fastifyAdapter);
-    app.useGlobalPipes(
-      new ValidationPipe({
-        exceptionFactory: (errors) => new ValidationException(errors),
-      }),
-    );
     dataSource = app.get(DataSource);
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
