@@ -37,7 +37,6 @@
     "@sweet-monads/maybe": "^3.3.1",
     "@types/passport-google-oauth20": "^2.0.14",
     "@types/uuid": "^9.0.7",
-    "@yarnpkg/plugin-interactive-tools": "^4.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "date-fns": "^2.30.0",
