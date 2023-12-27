@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Either, merge, right, left } from '@sweet-monads/either';
 import { Maybe } from '@sweet-monads/maybe';
+
 import { Config } from 'src/config';
 import { UserAccountEntity } from 'src/modules/users';
 

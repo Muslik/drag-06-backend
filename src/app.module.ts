@@ -4,10 +4,11 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HeaderResolver, I18nModule, I18nValidationPipe, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
+import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+
 import { GlobalExceptionFilter } from 'src/infrastructure/filters/exception.filter';
 import { ExceptionInterceptor } from 'src/infrastructure/interceptors/exception.interceptor';
 import { LoggerMiddleware } from 'src/infrastructure/middlewares/logger.middleware';
-import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 import { config, Config, configValidationScheme, NODE_ENV } from './config';
 import { AuthModule, AuthGuard } from './modules/auth';

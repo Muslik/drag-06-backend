@@ -1,5 +1,6 @@
-import { UserAccountEntity } from 'src/modules/users';
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { UserAccountEntity } from 'src/modules/users';
 
 @Entity('refresh_tokens')
 export class RefreshTokenEntity {

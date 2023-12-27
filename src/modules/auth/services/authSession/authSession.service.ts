@@ -1,5 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { Either } from '@sweet-monads/either';
+
 import { UserIdentity } from 'src/infrastructure/decorators';
 
 import { AUTH_SERVICE, AUTH_SERVICE_OPTIONS } from '../../auth.constants';

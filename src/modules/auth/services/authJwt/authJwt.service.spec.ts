@@ -1,6 +1,7 @@
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { left, right } from '@sweet-monads/either';
+
 import { RefreshTokenInvalidError } from 'src/modules/token';
 
 import { AUTH_SERVICE, AUTH_SERVICE_OPTIONS } from '../../auth.constants';

@@ -1,5 +1,6 @@
 import { Either } from '@sweet-monads/either';
 import { Maybe } from '@sweet-monads/maybe';
+
 import { UserAccountEntity } from 'src/modules/users';
 
 import { UnknownProviderError, InvalidTokenError } from '../../auth.errors';

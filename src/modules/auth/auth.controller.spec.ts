@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { left, right } from '@sweet-monads/either';
 import { just, none } from '@sweet-monads/maybe';
 import { FastifyReply } from 'fastify';
+
 import { SESSION_ID } from 'src/infrastructure/decorators/auth.decorator';
 
 import { RefreshTokenInvalidError } from '../token';

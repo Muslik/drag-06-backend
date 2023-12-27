@@ -2,8 +2,9 @@ import { CallHandler, ExecutionContext, Logger, NestInterceptor } from '@nestjs/
 import { I18nValidationException } from 'nestjs-i18n';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { ExceptionBase, InternalServerErrorException } from 'src/infrastructure/exceptions';
 import { TypeORMError } from 'typeorm';
+
+import { ExceptionBase, InternalServerErrorException } from 'src/infrastructure/exceptions';
 
 export class UnexpectedException extends InternalServerErrorException {
   constructor(inner?: unknown) {

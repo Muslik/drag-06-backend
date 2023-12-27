@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { none, Maybe, fromNullable } from '@sweet-monads/maybe';
+
 import { IS_PUBLIC_KEY } from 'src/infrastructure/decorators';
 import { SESSION_ID } from 'src/infrastructure/decorators/auth.decorator';
 import { SessionService } from 'src/modules/session';

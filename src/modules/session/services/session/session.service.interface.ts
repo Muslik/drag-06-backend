@@ -1,4 +1,5 @@
 import { Maybe } from '@sweet-monads/maybe';
+
 import { UserIdentity } from 'src/infrastructure/decorators';
 
 import { SessionEntity } from '../../entities/session.entity';

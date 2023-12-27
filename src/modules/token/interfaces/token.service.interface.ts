@@ -1,5 +1,6 @@
 import { Either } from '@sweet-monads/either';
 import { Maybe } from '@sweet-monads/maybe';
+
 import { UserIdentity } from 'src/infrastructure/decorators';
 
 import { JWTPayload } from '.';

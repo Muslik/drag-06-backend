@@ -2,6 +2,7 @@ import { ArgumentsHost, Catch, ExceptionFilter, Logger } from '@nestjs/common';
 import { I18nContext, I18nValidationError, I18nValidationException } from 'nestjs-i18n';
 import { formatI18nErrors } from 'nestjs-i18n/dist/utils/util';
 import { EMPTY, throwError } from 'rxjs';
+
 import { I18nTranslations } from 'src/generated/i18n.generated';
 import {
   ExceptionBase,

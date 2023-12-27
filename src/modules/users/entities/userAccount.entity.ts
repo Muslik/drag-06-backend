@@ -1,5 +1,6 @@
-import { SessionEntity } from 'src/modules/session';
 import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn, Relation } from 'typeorm';
+
+import { SessionEntity } from 'src/modules/session';
 
 import { RoleEntity } from './role.entity';
 import { UserSocialCredentialsEntity } from './userSocialCredentials.entity';
@@ -66,7 +67,10 @@ export class UserAccountEntity {
   })
   phone: string | null;
 
-  @OneToMany('UserSocialCredentialsEntity', (socialCredentials: UserSocialCredentialsEntity) => socialCredentials.userAccount)
+  @OneToMany(
+    'UserSocialCredentialsEntity',
+    (socialCredentials: UserSocialCredentialsEntity) => socialCredentials.userAccount,
+  )
   socialCredentials: Relation<UserSocialCredentialsEntity[]>;
 
   @OneToMany('SessionEntity', (session: SessionEntity) => session.userAccount)

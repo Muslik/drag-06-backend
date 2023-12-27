@@ -1,4 +1,5 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+
 import { ExceptionBase, RequestValidationError } from 'src/infrastructure/exceptions';
 
 export class ApiErrorResponse implements ExceptionBase {

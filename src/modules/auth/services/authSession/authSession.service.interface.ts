@@ -1,4 +1,5 @@
 import { Either } from '@sweet-monads/either';
+
 import { UserIdentity } from 'src/infrastructure/decorators';
 
 import { UnknownProviderError, InvalidTokenError } from '../../auth.errors';

@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Either } from '@sweet-monads/either';
+
 import { UserIdentity } from 'src/infrastructure/decorators';
 import { JWTTokensDto, RefreshTokenInvalidError } from 'src/modules/token';
 

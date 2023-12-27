@@ -4,10 +4,11 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Either, left, right } from '@sweet-monads/either';
 import { from, Maybe, none, fromNullable } from '@sweet-monads/maybe';
-import { Config } from 'src/config';
-import { UserIdentity } from 'src/infrastructure/decorators';
 import { Equal, DataSource, Repository } from 'typeorm';
 import { v1 as uuid } from 'uuid';
+
+import { Config } from 'src/config';
+import { UserIdentity } from 'src/infrastructure/decorators';
 
 import { JWTTokensDto } from './dto/jwtTokens.dto';
 import { RefreshTokenEntity } from './entities';

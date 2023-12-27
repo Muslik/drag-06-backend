@@ -2,9 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Maybe, fromNullable } from '@sweet-monads/maybe';
 import * as crypto from 'crypto';
-import { UserIdentity } from 'src/infrastructure/decorators';
 import { Equal, DataSource, EntityManager, Repository } from 'typeorm';
 import { v4 as uuid } from 'uuid';
+
+import { UserIdentity } from 'src/infrastructure/decorators';
 
 import { SessionEntity } from '../../entities/session.entity';
 import { ISessionService } from './session.service.interface';

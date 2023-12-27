@@ -1,4 +1,5 @@
 import { Either } from '@sweet-monads/either';
+
 import { UserIdentity } from 'src/infrastructure/decorators';
 import { RefreshTokenInvalidError, JWTTokensDto } from 'src/modules/token';
 
