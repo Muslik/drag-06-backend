@@ -53,7 +53,7 @@ const guards: Provider[] = [
         path: path.join(__dirname, '/i18n/'),
         watch: true,
       },
-      typesOutputPath: path.join(__dirname, '../src/generated/i18n.generated.ts'),
+      typesOutputPath: path.join(__dirname, '/generated/i18n.generated.ts'),
       resolvers: [{ use: QueryResolver, options: ['lang'] }, new HeaderResolver(['x-lang'])],
     }),
     TypeOrmModule.forRootAsync({
