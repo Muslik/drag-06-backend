@@ -6,6 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "postinstall": "husky install",
     "prebuild": "rimraf dist",
     "build": "cross-env NODE_ENV=production nest build",
     "check:lint": "eslint \"{src,test}/**/*.ts\"",
