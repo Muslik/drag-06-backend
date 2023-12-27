@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Maybe, fromNullable } from '@sweet-monads/maybe';
-import { Equal, DataSource, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
-import { UserAccountEntity, UserSocialCredentialsEntity } from './entities';
-import { UserWithSocialCredentials } from './interfaces';
+import { UserWithSocialCredentialsDto } from './dto/userWithSocialCredentials.dto';
+import { UserAccountEntity } from './entities/userAccount.entity';
+import { UserSocialCredentialsEntity } from './entities/userSocialCredentials.entity';
+import { IUsersService } from './interfaces/users.service.interface';
 import { generateAvatarColor } from './lib/generateAvatarColor';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements IUsersService {
   constructor(
     private dataSource: DataSource,
     @InjectRepository(UserAccountEntity)
@@ -23,7 +25,7 @@ export class UsersService {
     email,
     providerType,
     providerUserId,
-  }: UserWithSocialCredentials): Promise<UserAccountEntity> {
+  }: UserWithSocialCredentialsDto): Promise<UserAccountEntity> {
     return this.dataSource.transaction(async (transactionEntityManager) => {
       const avatarColor = generateAvatarColor();
 
@@ -35,32 +37,47 @@ export class UsersService {
         avatarColor,
       });
 
-      const createdUser = await transactionEntityManager.save(newUser);
+      await transactionEntityManager.save(newUser);
 
       const userSocialCredentials = this.userSocialCredentialsRepository.create({
         providerUserId,
         providerType,
-        userAccount: createdUser,
+        userAccount: newUser,
       });
       await transactionEntityManager.save(userSocialCredentials);
 
-      return createdUser;
+      return newUser;
     });
   }
 
-  findAll(): Promise<UserAccountEntity[]> {
-    return this.userAccountRepository.find();
+  getAll<T extends keyof UserAccountEntity>(fields: T[]): Promise<Pick<UserAccountEntity, T>[]> {
+    return this.userAccountRepository
+      .createQueryBuilder('user')
+      .select(fields.map((field) => `user.${field}`))
+      .getMany();
   }
 
-  async findById(id: string): Promise<Maybe<UserAccountEntity>> {
-    const user = await this.userAccountRepository.findOne({ where: { id: Equal(id) } });
-
-    return fromNullable(user);
+  async getByEmail<T extends keyof UserAccountEntity>(
+    email: string,
+    fields: T[],
+  ): Promise<Maybe<Pick<UserAccountEntity, T>>> {
+    return this.userAccountRepository
+      .createQueryBuilder('user')
+      .select(fields.map((field) => `user.${field}`))
+      .where('user.email = :email', { email })
+      .getOne()
+      .then(fromNullable);
   }
 
-  async findByEmail(email: string): Promise<Maybe<UserAccountEntity>> {
-    const user = await this.userAccountRepository.findOne({ where: { email: Equal(email) } });
-
-    return fromNullable(user);
+  async getById<T extends keyof UserAccountEntity>(
+    id: string,
+    fields: T[] = Object.keys(UserAccountEntity) as T[],
+  ): Promise<Maybe<Pick<UserAccountEntity, T>>> {
+    return this.userAccountRepository
+      .createQueryBuilder('user')
+      .select(fields.map((field) => `user.${field}`))
+      .where('user.id = :id', { id })
+      .getOne()
+      .then(fromNullable);
   }
 }

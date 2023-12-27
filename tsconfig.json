@@ -2,10 +2,7 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "@src/*": ["src/*"],
-      "@modules/*": ["src/modules/*"],
-      "@libs/*": ["src/libs/*"],
-      "@tests/*": ["tests/*"]
+      "src/*": ["src/*"],
     },
     "module": "commonjs",
     "declaration": true,

@@ -4,8 +4,3 @@ export type JWTPayload = {
   exp: number;
   iss: string;
 };
-
-export type Token = {
-  accessToken: string;
-  refreshToken: string;
-};

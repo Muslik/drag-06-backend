@@ -1,13 +1,11 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { Public } from 'src/infrastructure/decorators';
+import { BadRequestException } from 'src/infrastructure/exceptions';
 
-import { Public } from '@src/libs/decorators';
-import { BadRequestException } from '@src/libs/exceptions';
-
+@ApiTags('users')
 @Controller('users')
-@Public()
 export class UsersController {
-  @Get()
-  getUsers() {
-    return new BadRequestException('EXCEPTION', 'SORRY');
-  }
+  @Post('roles')
+  async createRole() {}
 }

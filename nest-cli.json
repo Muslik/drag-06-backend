@@ -3,7 +3,7 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "assets": [
-      { "include": "i18n/**/*", "watchAssets": true }
+      { "include": "i18n/**/*", "watchAssets": true, "outDir": "dist/src/i18n" }
     ],
     "plugins": ["@nestjs/swagger"]
   }

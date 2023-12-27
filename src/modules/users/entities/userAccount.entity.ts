@@ -1,9 +1,8 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { SessionEntity } from 'src/modules/session';
+import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn, Relation } from 'typeorm';
 
-export enum Sex {
-  MALE = 'male',
-  FEMALE = 'female',
-}
+import { RoleEntity } from './role.entity';
+import { UserSocialCredentialsEntity } from './userSocialCredentials.entity';
 
 @Entity('user_accounts')
 export class UserAccountEntity {
@@ -25,11 +24,10 @@ export class UserAccountEntity {
   lastName: string | null;
 
   @Column({
-    type: 'enum',
-    enum: Sex,
+    type: 'int2',
     nullable: true,
   })
-  sex?: Sex;
+  sex: number | null;
 
   @Column({
     nullable: true,
@@ -67,4 +65,24 @@ export class UserAccountEntity {
     length: 50,
   })
   phone: string | null;
+
+  @OneToMany('UserSocialCredentialsEntity', (socialCredentials: UserSocialCredentialsEntity) => socialCredentials.userAccount)
+  socialCredentials: Relation<UserSocialCredentialsEntity[]>;
+
+  @OneToMany('SessionEntity', (session: SessionEntity) => session.userAccount)
+  sessions: Relation<SessionEntity[]>;
+
+  @ManyToMany('RoleEntity', (role: RoleEntity) => role.userAccounts)
+  @JoinTable({
+    name: 'user_accounts_roles',
+    joinColumn: {
+      name: 'user_account_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'role_id',
+      referencedColumnName: 'id',
+    },
+  })
+  roles: Relation<RoleEntity[]>;
 }

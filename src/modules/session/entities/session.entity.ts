@@ -1,6 +1,5 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-
-import { UserAccountEntity } from '@modules/users/entities';
+import { UserAccountEntity } from 'src/modules/users';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Relation, RelationId } from 'typeorm';
 
 @Entity('sessions')
 export class SessionEntity {
@@ -17,17 +16,14 @@ export class SessionEntity {
   ip: string;
 
   @Column('timestamp with time zone', { default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: string;
+  createdAt: Date;
 
   @Column('timestamp with time zone', { default: () => 'CURRENT_TIMESTAMP' })
-  lastAccessAt: string;
+  lastAccessAt: Date;
 
-  @ManyToOne(() => UserAccountEntity, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn()
-  userAccount: UserAccountEntity;
+  @ManyToOne('UserAccountEntity', (user: UserAccountEntity) => user.sessions)
+  userAccount: Relation<UserAccountEntity>;
 
-  @Column()
+  @RelationId((session: SessionEntity) => session.userAccount)
   userAccountId: string;
 }

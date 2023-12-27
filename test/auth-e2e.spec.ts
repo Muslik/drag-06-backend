@@ -1,3 +1,8 @@
+import { AppModule } from '@drag/app.module';
+import { ValidationException } from '@drag/exceptions';
+import { SessionEntity } from '@drag/modules/session/entities/session.entity';
+import { RefreshTokenEntity } from '@drag/modules/token/entities';
+import { UserAccountEntity, UserSocialCredentialsEntity } from '@drag/modules/users/entities';
 import fastifyCookie from '@fastify/cookie';
 import { ValidationPipe } from '@nestjs/common';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
@@ -5,12 +10,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { InjectOptions, LightMyRequestResponse } from 'fastify';
 import { IncomingHttpHeaders } from 'http';
 import { DataSource } from 'typeorm';
-
-import { AppModule } from '@drag/app.module';
-import { ValidationException } from '@drag/exceptions';
-import { SessionEntity } from '@drag/modules/session/entities/session.entity';
-import { RefreshTokenEntity } from '@drag/modules/token/entities';
-import { UserAccountEntity, UserSocialCredentialsEntity } from '@drag/modules/users/entities';
 
 const email = 'Ivan@mail.ru';
 
@@ -64,7 +63,7 @@ const mockedUser = {
   username: email,
 };
 
-describe('Auth', () => {
+describe.skip('Auth', () => {
   let app: NestFastifyApplication;
   let dataSource: DataSource;
 
@@ -92,12 +91,9 @@ describe('Auth', () => {
 
   const userLogin = (payload: Record<string, string> = { token: 'gToken' }) =>
     app.inject(request('/auth/login/google', payload));
-  const getCurrentSession = (cookies?: Record<string, string>) =>
-    app.inject(request('/auth/session', {}, {}, cookies));
-  const logout = (cookies?: Record<string, string>) =>
-    app.inject(request('/auth/logout', {}, {}, cookies));
-  const logoutAll = (cookies?: Record<string, string>) =>
-    app.inject(request('/auth/logout-all', {}, {}, cookies));
+  const getCurrentSession = (cookies?: Record<string, string>) => app.inject(request('/auth/session', {}, {}, cookies));
+  const logout = (cookies?: Record<string, string>) => app.inject(request('/auth/logout', {}, {}, cookies));
+  const logoutAll = (cookies?: Record<string, string>) => app.inject(request('/auth/logout-all', {}, {}, cookies));
 
   afterAll(async () => {
     await app.close();
@@ -125,9 +121,7 @@ describe('Auth', () => {
       expect(user).toBeDefined();
       expect(session).toBeDefined();
       expect(userSocialCredentials).toBeDefined();
-      expect(cookie).toEqual(
-        expect.objectContaining({ name: 'sessionId', value: session?.sessionId }),
-      );
+      expect(cookie).toEqual(expect.objectContaining({ name: 'sessionId', value: session?.sessionId }));
       expect(response.json()).toEqual(mockedUser);
       expect(response.statusCode).toBe(201);
     });

@@ -1,15 +1,26 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 
-import { TokenModule } from '@modules/token/token.module';
-
-import { UserAccountEntity, UserSocialCredentialsEntity } from './entities';
+import { PermissionEntity } from './entities/permission.entity';
+import { RoleEntity } from './entities/role.entity';
+import { UserAccountEntity } from './entities/userAccount.entity';
+import { UserSocialCredentialsEntity } from './entities/userSocialCredentials.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
 @Module({
-  imports: [TokenModule, TypeOrmModule.forFeature([UserAccountEntity, UserSocialCredentialsEntity])],
-  providers: [UsersService],
+  imports: [TypeOrmModule.forFeature([UserAccountEntity, UserSocialCredentialsEntity])],
+  providers: [
+    {
+      provide: getRepositoryToken(UserSocialCredentialsEntity),
+      useClass: UserSocialCredentialsEntity,
+    },
+    {
+      provide: getRepositoryToken(UserAccountEntity),
+      useClass: UserAccountEntity,
+    },
+    UsersService,
+  ],
   exports: [UsersService],
   controllers: [UsersController],
 })

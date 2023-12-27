@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Relation, RelationId } from 'typeorm';
 
 import { UserAccountEntity } from './userAccount.entity';
 
@@ -10,15 +10,12 @@ export class UserSocialCredentialsEntity {
   @Column({ unique: true })
   providerUserId: string;
 
-  @Column({ unique: true })
+  @Column()
   providerType: string;
 
-  @Column()
-  userAccountId: string;
+  @ManyToOne('UserAccountEntity', (user: UserAccountEntity) => user.socialCredentials)
+  userAccount: Relation<UserAccountEntity>;
 
-  @OneToOne(() => UserAccountEntity, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn()
-  userAccount: UserAccountEntity;
+  @RelationId((user: UserSocialCredentialsEntity) => user.userAccount)
+  userAccountId: string;
 }
