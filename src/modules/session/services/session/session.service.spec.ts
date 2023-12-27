@@ -18,11 +18,8 @@ const mockUser = {
   avatarColor: 'test-avatar-color',
 };
 
-export const dataSourceMock = jest.fn(() => ({
-  transaction: jest.fn(),
-}));
-
 class MockRepository {
+  create = jest.fn();
   findAndCount = jest.fn();
   findOne = jest.fn();
   save = jest.fn();
@@ -30,6 +27,13 @@ class MockRepository {
 }
 
 const mockRepository = new MockRepository();
+
+const mockCreatedSession = {
+  id: 'test-id',
+  sessionId: 'test-session-id',
+  userAgent: 'test-user-agent',
+  ip: '127.0.0.1',
+};
 
 const mockSession = {
   id: 'test-id',
@@ -46,7 +50,6 @@ const mockSessionWithUserAccount = {
   userAccount: mockUser,
 };
 
-// In progress
 describe('AuthJwtService', () => {
   let sessionService: SessionService;
 
@@ -116,13 +119,11 @@ describe('AuthJwtService', () => {
   it('Creates new session and return session-id', async () => {
     const userId = 'test-user-id';
 
+    mockRepository.create.mockReturnValueOnce(mockCreatedSession);
+
     const result = await sessionService.createSession(userId, mockUserIdentity);
 
-    expect(mockRepository.save).toHaveBeenCalledWith({
-      userAccountId: userId,
-      sessionId: expect.any(String),
-      ...mockUserIdentity,
-    });
+    expect(mockRepository.save).toHaveBeenCalledWith(mockCreatedSession);
 
     expect(result).toEqual({
       sessionId: expect.any(String),

@@ -46,11 +46,13 @@ export class SessionService implements ISessionService {
   async createSession(userId: string, userIdentity: UserIdentity): Promise<{ sessionId: string }> {
     const sessionId = this.generateSessionId();
 
-    this.sessionRepository.save({
+    const session = this.sessionRepository.create({
       userAccountId: userId,
       sessionId,
       ...userIdentity,
     });
+
+    await this.sessionRepository.save(session);
 
     return {
       sessionId,

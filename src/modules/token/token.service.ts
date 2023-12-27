@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Either, left, right } from '@sweet-monads/either';
-import { from, Maybe, none, fromNullable } from '@sweet-monads/maybe';
+import { just, Maybe, none, fromNullable } from '@sweet-monads/maybe';
 import { Equal, DataSource, Repository } from 'typeorm';
 import { v1 as uuid } from 'uuid';
 
@@ -75,7 +75,7 @@ export class TokenService implements ITokenService {
     try {
       const data = this.jwtService.verify<JWTPayload>(token);
 
-      return from(data);
+      return just(data);
     } catch (error) {
       return none();
     }
@@ -103,9 +103,11 @@ export class TokenService implements ITokenService {
   async getUserTokens(userId: string, userIdentity: UserIdentity): Promise<JWTTokensDto> {
     const tokens = this.createTokensByUserID(userId);
 
-    await this.verifyToken(tokens.refreshToken).asyncMap(({ exp: expires }) =>
-      this.saveUserToken(userId, tokens.refreshToken, expires, userIdentity),
-    );
+    const tokenMaybe = this.verifyToken(tokens.refreshToken);
+
+    await tokenMaybe.asyncMap(({ exp: expires }) => {
+      return this.saveUserToken(userId, tokens.refreshToken, expires, userIdentity);
+    });
 
     return tokens;
   }

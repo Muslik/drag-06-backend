@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, Provider } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HeaderResolver, I18nModule, I18nValidationPipe, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
@@ -47,6 +48,16 @@ const guards: Provider[] = [
 
 @Module({
   imports: [
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService<Config>) => ({
+        secret: configService.get('jwt.secret', { infer: true }),
+        signOptions: {
+          issuer: configService.get('jwt.issuer', { infer: true }),
+        },
+      }),
+      inject: [ConfigService],
+    }),
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
