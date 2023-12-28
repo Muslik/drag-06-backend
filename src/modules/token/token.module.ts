@@ -1,21 +1,17 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { RefreshTokenEntity } from './entities';
 import { TokenService } from './token.service';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, TypeOrmModule.forFeature([RefreshTokenEntity])],
   providers: [
     {
       provide: JwtService,
       useClass: JwtService,
-    },
-    {
-      provide: getRepositoryToken(RefreshTokenEntity),
-      useClass: RefreshTokenEntity,
     },
     TokenService,
   ],

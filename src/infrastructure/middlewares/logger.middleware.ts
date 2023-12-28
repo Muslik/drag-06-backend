@@ -6,8 +6,8 @@ export class LoggerMiddleware implements NestMiddleware {
   private readonly logger: Logger = new Logger('HTTP');
 
   use(request: FastifyRequest, response: FastifyReply['raw'], next: () => void): void {
-    const { method, ip, headers } = request;
-    this.logger.debug(`[REQUEST]: ${method}, ${headers['user-agent']}, ${ip}`);
+    const { method, ip, originalUrl } = request;
+    this.logger.debug(`[REQUEST]: ${method}, ${originalUrl}`);
 
     response.on('finish', () => {
       const { statusCode } = response;

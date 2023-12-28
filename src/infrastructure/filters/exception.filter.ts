@@ -43,7 +43,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           lang: i18n.lang,
         });
 
-        // eslint-disable-next-line no-param-reassign
         const message =
           i18n.service.translate('translations.validationFailed', {
             lang: i18n.lang,

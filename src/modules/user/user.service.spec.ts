@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -18,6 +19,7 @@ const mockRepository = {
   save: jest.fn(),
   delete: jest.fn(),
   createQueryBuilder: jest.fn(() => ({
+    getQuery: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
     getOne: jest.fn(),
@@ -33,6 +35,7 @@ describe('User Service', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule],
       providers: [
+        Logger,
         {
           provide: DataSource,
           useValue: dataSourceMock,

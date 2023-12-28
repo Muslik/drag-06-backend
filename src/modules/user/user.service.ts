@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Maybe, fromNullable } from '@sweet-monads/maybe';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Repository, SelectQueryBuilder } from 'typeorm';
 
 import { UserWithSocialCredentialsDto } from './dto/userWithSocialCredentials.dto';
 import { UserAccountEntity } from './entities/userAccount.entity';
@@ -17,7 +17,13 @@ export class UserService implements IUserService {
     private readonly userAccountRepository: Repository<UserAccountEntity>,
     @InjectRepository(UserSocialCredentialsEntity)
     private readonly userSocialCredentialsRepository: Repository<UserSocialCredentialsEntity>,
+    private readonly logger: Logger = new Logger(UserService.name),
   ) {}
+
+  private logQuery(queryBuilder: SelectQueryBuilder<UserAccountEntity>): void {
+    const query = queryBuilder.getQuery();
+    this.logger.debug(`Executing query: ${query}`);
+  }
 
   async createWithSocialCredentials({
     firstName,
@@ -51,35 +57,38 @@ export class UserService implements IUserService {
   }
 
   getAll<T extends keyof UserAccountEntity>(fields: T[]): Promise<Pick<UserAccountEntity, T>[]> {
-    return this.userAccountRepository
-      .createQueryBuilder('user')
-      .select(fields.map((field) => `user.${field}`))
-      .getMany();
+    const query = this.userAccountRepository.createQueryBuilder('user').select(fields.map((field) => `user.${field}`));
+
+    this.logQuery(query);
+
+    return query.getMany();
   }
 
   async getByEmail<T extends keyof UserAccountEntity>(
     email: string,
     fields: T[],
   ): Promise<Maybe<Pick<UserAccountEntity, T>>> {
-    return fromNullable(
-      await this.userAccountRepository
-        .createQueryBuilder('user')
-        .select(fields.map((field) => `user.${field}`))
-        .where('user.email = :email', { email })
-        .getOne(),
-    );
+    const query = this.userAccountRepository
+      .createQueryBuilder('user')
+      .select(fields.map((field) => `user.${field}`))
+      .where('user.email = :email', { email });
+
+    this.logQuery(query);
+
+    return fromNullable(await query.getOne());
   }
 
   async getById<T extends keyof UserAccountEntity>(
     id: string,
     fields: T[] = Object.keys(UserAccountEntity) as T[],
   ): Promise<Maybe<Pick<UserAccountEntity, T>>> {
-    return fromNullable(
-      await this.userAccountRepository
-        .createQueryBuilder()
-        .select(fields.map((field) => `user.${field}`))
-        .where('user.id = :id', { id })
-        .getOne(),
-    );
+    const query = this.userAccountRepository
+      .createQueryBuilder()
+      .select(fields.map((field) => `user.${field}`))
+      .where('user.id = :id', { id });
+
+    this.logQuery(query);
+
+    return fromNullable(await query.getOne());
   }
 }

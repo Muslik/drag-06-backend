@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
+import { Logger, Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { UserAccountEntity } from './entities/userAccount.entity';
 import { UserSocialCredentialsEntity } from './entities/userSocialCredentials.entity';
@@ -7,17 +7,8 @@ import { UsersController } from './user.controller';
 import { UserService } from './user.service';
 
 @Module({
-  providers: [
-    {
-      provide: getRepositoryToken(UserSocialCredentialsEntity),
-      useClass: UserSocialCredentialsEntity,
-    },
-    {
-      provide: getRepositoryToken(UserAccountEntity),
-      useClass: UserAccountEntity,
-    },
-    UserService,
-  ],
+  imports: [TypeOrmModule.forFeature([UserAccountEntity, UserSocialCredentialsEntity])],
+  providers: [Logger, UserService],
   controllers: [UsersController],
   exports: [UserService],
 })
