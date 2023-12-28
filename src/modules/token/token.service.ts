@@ -3,20 +3,21 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Either, left, right } from '@sweet-monads/either';
-import { from, Maybe, none, fromNullable } from '@sweet-monads/maybe';
+import { just, Maybe, none, fromNullable } from '@sweet-monads/maybe';
 import { Equal, DataSource, Repository } from 'typeorm';
 import { v1 as uuid } from 'uuid';
 
-import { Config } from '@src/config';
+import { Config } from 'src/config';
+import { UserIdentity } from 'src/infrastructure/decorators';
 
-import { UserIdentity } from '@libs/decorators';
-
+import { JWTTokensDto } from './dto/jwtTokens.dto';
 import { RefreshTokenEntity } from './entities';
-import { JWTPayload, Token } from './interfaces';
+import { JWTPayload } from './interfaces';
+import { ITokenService } from './interfaces/token.service.interface';
 import { RefreshTokenInvalidError } from './token.errors';
 
 @Injectable()
-export class TokenService {
+export class TokenService implements ITokenService {
   private readonly accessTokenTtl: number;
   private readonly refreshTokenTtl: number;
   constructor(
@@ -32,7 +33,7 @@ export class TokenService {
     this.refreshTokenTtl = this.configService.get<number>('jwt.refreshTokenTtl', { infer: true });
   }
 
-  private createTokensByUserID(userId: string): Token {
+  private createTokensByUserID(userId: string): JWTTokensDto {
     const random = Math.random();
     const payload = { userId, random };
     const accessToken = this.jwtService.sign(payload, {
@@ -47,7 +48,7 @@ export class TokenService {
     return { accessToken, refreshToken };
   }
 
-  private async refreshUserTokens(currentToken: RefreshTokenEntity, userIdentity: UserIdentity): Promise<Token> {
+  private async refreshUserTokens(currentToken: RefreshTokenEntity, userIdentity: UserIdentity): Promise<JWTTokensDto> {
     return this.dataSource.transaction(async (transactionEntityManager) => {
       transactionEntityManager.remove(currentToken);
 
@@ -74,7 +75,7 @@ export class TokenService {
     try {
       const data = this.jwtService.verify<JWTPayload>(token);
 
-      return from(data);
+      return just(data);
     } catch (error) {
       return none();
     }
@@ -83,7 +84,7 @@ export class TokenService {
   async getRefreshedUserTokens(
     refreshToken: string,
     userIdentity: UserIdentity,
-  ): Promise<Either<RefreshTokenInvalidError, Token>> {
+  ): Promise<Either<RefreshTokenInvalidError, JWTTokensDto>> {
     const tokenData = this.verifyToken(refreshToken);
 
     if (tokenData.isNone()) {
@@ -99,12 +100,14 @@ export class TokenService {
     return currentRefresh.isJust() ? right(currentRefresh.value) : left(new RefreshTokenInvalidError());
   }
 
-  async getUserTokens(userId: string, userIdentity: UserIdentity): Promise<Token> {
+  async getUserTokens(userId: string, userIdentity: UserIdentity): Promise<JWTTokensDto> {
     const tokens = this.createTokensByUserID(userId);
 
-    await this.verifyToken(tokens.refreshToken).asyncMap(({ exp: expires }) =>
-      this.saveUserToken(userId, tokens.refreshToken, expires, userIdentity),
-    );
+    const tokenMaybe = this.verifyToken(tokens.refreshToken);
+
+    await tokenMaybe.asyncMap(({ exp: expires }) => {
+      return this.saveUserToken(userId, tokens.refreshToken, expires, userIdentity);
+    });
 
     return tokens;
   }

@@ -1,11 +1,11 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { none, Maybe } from '@sweet-monads/maybe';
+import { none, Maybe, fromNullable } from '@sweet-monads/maybe';
 
-import { IS_PUBLIC_KEY } from '@libs/decorators';
-
-import { SessionService } from '@modules/session/session.service';
-import { TokenService } from '@modules/token/token.service';
+import { IS_PUBLIC_KEY } from 'src/infrastructure/decorators';
+import { SESSION_ID } from 'src/infrastructure/decorators/auth.decorator';
+import { SessionService } from 'src/modules/session';
+import { TokenService } from 'src/modules/token';
 
 import { UnauthorizedError } from '../auth.errors';
 
@@ -27,6 +27,22 @@ export class AuthGuard implements CanActivate {
       .then((maybe) => maybe.map(({ userAccountId }) => userAccountId));
   }
 
+  private getTokenFromHeader(headers: Record<string, string>): Maybe<string> {
+    const header = headers.Authorization;
+
+    if (!header) {
+      return none();
+    }
+
+    const [type, token] = header.split(' ');
+
+    if (type !== 'Bearer') {
+      return none();
+    }
+
+    return fromNullable(token);
+  }
+
   private getUserIdFromAccessToken(accessToken: string): Maybe<string> {
     if (!accessToken) {
       return none();
@@ -45,11 +61,10 @@ export class AuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    const cookieSessionId = request.cookies.sessionId;
-    const headerAccessToken = request.headers.authorization;
+    const cookieSessionId = request.cookies[SESSION_ID];
 
     const userIdFromSession = await this.getUserIdFromSessionId(cookieSessionId);
-    const userIdFromAccessToken = this.getUserIdFromAccessToken(headerAccessToken);
+    const userIdFromAccessToken = this.getTokenFromHeader(request.headers).chain(this.getUserIdFromAccessToken);
 
     return userIdFromSession
       .or(userIdFromAccessToken)
@@ -62,6 +77,6 @@ export class AuthGuard implements CanActivate {
 
         return true;
       })
-      .unwrap(() => new UnauthorizedException());
+      .unwrap(() => new UnauthorizedError());
   }
 }

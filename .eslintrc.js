@@ -7,7 +7,7 @@ module.exports = configure({
   extend: {
     rules: {
       "newline-before-return": "error",
-      "@typescript-eslint/consistent-type-definitions": ["warn", "type"],
+      "@typescript-eslint/consistent-type-definitions": "off",
     }
   }
 })

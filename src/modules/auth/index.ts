@@ -1,2 +1,2 @@
-export { AuthService, GoogleAuthService } from './services';
-export { LoginGoogleDto } from './dto';
+export { AuthModule } from './auth.module';
+export { AuthGuard } from './guards/auth.guard';

@@ -1,24 +1,21 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, Provider } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HeaderResolver, I18nModule, I18nValidationPipe, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
-import { AuthModule } from '@modules/auth/auth.module';
-import { AuthGuard } from '@modules/auth/guards/auth.guard';
-import { EventsModule } from '@modules/events/events.module';
-import { OauthModule } from '@modules/oauth/oauth.module';
-import { ReferencesModule } from '@modules/references/references.module';
-import { SessionModule } from '@modules/session/session.module';
-import { TokenModule } from '@modules/token/token.module';
-import { UsersModule } from '@modules/users/users.module';
+import { GlobalExceptionFilter } from 'src/infrastructure/filters/exception.filter';
+import { ExceptionInterceptor } from 'src/infrastructure/interceptors/exception.interceptor';
+import { LoggerMiddleware } from 'src/infrastructure/middlewares/logger.middleware';
 
 import { config, Config, configValidationScheme, NODE_ENV } from './config';
-import { GlobalExceptionFilter } from './libs/application/filters/exception.filter';
-import { ExceptionInterceptor } from './libs/application/interceptors/exception.interceptor';
-import { LoggerMiddleware } from './libs/middlewares/logger.middleware';
+import { AuthModule, AuthGuard } from './modules/auth';
+import { SessionModule, SessionService } from './modules/session';
+import { TokenModule, TokenService } from './modules/token';
+import { UsersModule, UserService } from './modules/user';
 
 const pipes = [
   {
@@ -41,54 +38,69 @@ const filters = [
   },
 ];
 
-const guards = [
+const guards: Provider[] = [
   {
     provide: APP_GUARD,
-    useClass: AuthGuard,
+    useExisting: AuthGuard,
   },
+  AuthGuard,
 ];
 
 @Module({
   imports: [
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService<Config>) => ({
+        secret: configService.get('jwt.secret', { infer: true }),
+        signOptions: {
+          issuer: configService.get('jwt.issuer', { infer: true }),
+        },
+      }),
+      inject: [ConfigService],
+    }),
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
         path: path.join(__dirname, '/i18n/'),
         watch: true,
       },
-      typesOutputPath: path.join(__dirname, '../src/generated/i18n.generated.ts'),
+      typesOutputPath: path.join(__dirname, '/generated/i18n.generated.ts'),
       resolvers: [{ use: QueryResolver, options: ['lang'] }, new HeaderResolver(['x-lang'])],
-    }),
-    ConfigModule.forRoot({
-      load: [config],
-      isGlobal: true,
-      envFilePath: NODE_ENV === 'production' ? '.env' : `.env.${NODE_ENV}`,
-      validationSchema: configValidationScheme,
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService<Config>) => {
-        return {
-          type: 'postgres',
-          namingStrategy: new SnakeNamingStrategy(),
-          host: configService.get('database.host', { infer: true }),
-          port: configService.get('database.port', { infer: true }),
-          username: configService.get('database.user', { infer: true }),
-          password: configService.get('database.password', { infer: true }),
-          database: configService.get('database.name', { infer: true }),
-          autoLoadEntities: true,
-          synchronize: true,
-        };
-      },
       inject: [ConfigService],
+      useFactory: (configService: ConfigService<Config>) => ({
+        type: 'postgres',
+        namingStrategy: new SnakeNamingStrategy(),
+        host: configService.get('database.host', { infer: true }),
+        port: configService.get('database.port', { infer: true }),
+        username: configService.get('database.user', { infer: true }),
+        password: configService.get('database.password', { infer: true }),
+        database: configService.get('database.name', { infer: true }),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        dropSchema: false,
+        synchronize: true,
+      }),
     }),
-    AuthModule,
+    ConfigModule.forRoot({
+      load: [config],
+      isGlobal: false,
+      envFilePath: NODE_ENV === 'production' ? '.env' : `.env.${NODE_ENV}`,
+      validationSchema: configValidationScheme,
+    }),
+    AuthModule.forRootAsync({
+      imports: [UsersModule, SessionModule, TokenModule],
+      useFactory: async (userService: UserService, sessionService: SessionService, tokenService: TokenService) => ({
+        tokenService,
+        userService,
+        sessionService,
+      }),
+      inject: [UserService, SessionService, TokenService],
+    }),
     UsersModule,
     TokenModule,
     SessionModule,
-    OauthModule,
-    EventsModule,
-    ReferencesModule,
   ],
   providers: [...interceptors, ...filters, ...guards, ...pipes],
 })
