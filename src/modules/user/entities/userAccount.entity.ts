@@ -1,6 +1,7 @@
 import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn, Relation } from 'typeorm';
 
 import { SessionEntity } from 'src/modules/session';
+import { RefreshTokenEntity } from 'src/modules/token';
 
 import { RoleEntity } from './role.entity';
 import { UserSocialCredentialsEntity } from './userSocialCredentials.entity';
@@ -70,11 +71,21 @@ export class UserAccountEntity {
   @OneToMany(
     'UserSocialCredentialsEntity',
     (socialCredentials: UserSocialCredentialsEntity) => socialCredentials.userAccount,
+    {
+      onDelete: 'CASCADE',
+    },
   )
   socialCredentials: Relation<UserSocialCredentialsEntity[]>;
 
-  @OneToMany('SessionEntity', (session: SessionEntity) => session.userAccount)
+  @OneToMany('SessionEntity', (session: SessionEntity) => session.userAccount, {
+    onDelete: 'CASCADE',
+  })
   sessions: Relation<SessionEntity[]>;
+
+  @OneToMany('RefreshTokenEntity', (refreshToken: RefreshTokenEntity) => refreshToken.userAccountId, {
+    onDelete: 'CASCADE',
+  })
+  refreshTokens: Relation<RefreshTokenEntity[]>;
 
   @ManyToMany('RoleEntity', (role: RoleEntity) => role.userAccounts)
   @JoinTable({

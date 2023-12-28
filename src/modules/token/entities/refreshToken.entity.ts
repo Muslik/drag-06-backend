@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Relation, ManyToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
 
 import { UserAccountEntity } from 'src/modules/user';
 
@@ -22,12 +22,9 @@ export class RefreshTokenEntity {
   @Column('timestamp with time zone', { default: () => 'CURRENT_TIMESTAMP' })
   createdAt: string;
 
-  @Column()
-  userAccountId: string;
+  @ManyToOne('UserAccountEntity', (userAccount: UserAccountEntity) => userAccount.refreshTokens)
+  userAccount: Relation<UserAccountEntity>;
 
-  @ManyToOne(() => UserAccountEntity, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn()
-  userAccount: UserAccountEntity;
+  @RelationId((refreshToken: RefreshTokenEntity) => refreshToken.userAccount)
+  userAccountId: string;
 }
