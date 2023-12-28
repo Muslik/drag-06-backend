@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { left, right } from '@sweet-monads/either';
 import { just, none } from '@sweet-monads/maybe';
 
-import { UserAccountEntity } from 'src/modules/users';
+import { UserAccountEntity } from 'src/modules/user';
 
 import { AUTH_SERVICE_OPTIONS, AUTH_GOOGLE_SERVICE } from '../../auth.constants';
 import { InvalidTokenError, UnknownProviderError } from '../../auth.errors';
@@ -15,7 +15,7 @@ const mockAuthGoogleService = {
 };
 
 const mockAuthServiceOptions = {
-  usersService: {
+  userService: {
     getByEmail: jest.fn(),
     getById: jest.fn(),
     createWithSocialCredentials: jest.fn(),
@@ -57,7 +57,7 @@ describe('AuthService', () => {
     const expectedUser: UserAccountEntity = {} as UserAccountEntity;
 
     jest.spyOn(mockAuthGoogleService, 'getUserInfo').mockResolvedValueOnce(right({ email: 'test@example.com' }));
-    jest.spyOn(mockAuthServiceOptions.usersService, 'getByEmail').mockResolvedValueOnce(just(expectedUser));
+    jest.spyOn(mockAuthServiceOptions.userService, 'getByEmail').mockResolvedValueOnce(just(expectedUser));
 
     const result = await authService.signIn(signInDto);
 
@@ -100,24 +100,24 @@ describe('AuthService', () => {
     const expectedUser: UserAccountEntity = {} as UserAccountEntity;
 
     jest.spyOn(mockAuthGoogleService, 'getUserInfo').mockResolvedValueOnce(right({ email: 'test@example.com' }));
-    jest.spyOn(mockAuthServiceOptions.usersService, 'getByEmail').mockResolvedValueOnce(none());
-    jest.spyOn(mockAuthServiceOptions.usersService, 'createWithSocialCredentials').mockResolvedValueOnce(expectedUser);
+    jest.spyOn(mockAuthServiceOptions.userService, 'getByEmail').mockResolvedValueOnce(none());
+    jest.spyOn(mockAuthServiceOptions.userService, 'createWithSocialCredentials').mockResolvedValueOnce(expectedUser);
 
     const result = await authService.signIn(signInDto);
 
     expect(result).toEqual(right(expectedUser));
-    expect(mockAuthServiceOptions.usersService.createWithSocialCredentials).toHaveBeenCalledWith(googleUserInfo);
+    expect(mockAuthServiceOptions.userService.createWithSocialCredentials).toHaveBeenCalledWith(googleUserInfo);
   });
 
   it('should return current user if the user exists', async () => {
     const expectedUser: UserAccountEntity = {} as UserAccountEntity;
 
-    jest.spyOn(mockAuthServiceOptions.usersService, 'getById').mockResolvedValueOnce(just(expectedUser));
+    jest.spyOn(mockAuthServiceOptions.userService, 'getById').mockResolvedValueOnce(just(expectedUser));
 
     const result = await authService.getMe('userId');
 
     expect(result).toEqual(just(expectedUser));
-    expect(mockAuthServiceOptions.usersService.getById).toHaveBeenCalledWith('userId', [
+    expect(mockAuthServiceOptions.userService.getById).toHaveBeenCalledWith('userId', [
       'id',
       'email',
       'firstName',

@@ -4,7 +4,7 @@ import { Either, merge, right, left } from '@sweet-monads/either';
 import { Maybe } from '@sweet-monads/maybe';
 
 import { Config } from 'src/config';
-import { UserAccountEntity } from 'src/modules/users';
+import { UserAccountEntity } from 'src/modules/user';
 
 import { AUTH_SERVICE_OPTIONS, AUTH_GOOGLE_SERVICE } from '../../auth.constants';
 import { InvalidTokenError, UnknownProviderError } from '../../auth.errors';
@@ -48,13 +48,13 @@ export class AuthService implements IAuthService {
   }
 
   async getMe(userId: string): Promise<Maybe<UserAuthDto>> {
-    return await this.authServiceOptions.usersService
+    return await this.authServiceOptions.userService
       .getById(userId, ['id', 'email', 'firstName', 'lastName', 'avatarColor', 'username'])
       .then((maybe) => maybe.map((user) => this.toUserAuthDto(user)));
   }
 
   private async getUserAuthDto(email: string): Promise<Maybe<UserAuthDto>> {
-    return this.authServiceOptions.usersService
+    return this.authServiceOptions.userService
       .getByEmail(email, ['id', 'username', 'firstName', 'lastName', 'email', 'avatarColor'])
       .then((maybe) => maybe.map((userAccount) => this.toUserAuthDto(userAccount)));
   }
@@ -71,7 +71,7 @@ export class AuthService implements IAuthService {
         return right(user.value);
       }
 
-      const newUser = await this.authServiceOptions.usersService
+      const newUser = await this.authServiceOptions.userService
         .createWithSocialCredentials(googleUserInfo)
         .then((userAccount) => this.toUserAuthDto(userAccount));
 

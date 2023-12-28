@@ -6,11 +6,11 @@ import { DataSource, Repository } from 'typeorm';
 import { UserWithSocialCredentialsDto } from './dto/userWithSocialCredentials.dto';
 import { UserAccountEntity } from './entities/userAccount.entity';
 import { UserSocialCredentialsEntity } from './entities/userSocialCredentials.entity';
-import { IUsersService } from './interfaces/users.service.interface';
+import { IUserService } from './interfaces/user.service.interface';
 import { generateAvatarColor } from './lib/generateAvatarColor';
 
 @Injectable()
-export class UsersService implements IUsersService {
+export class UserService implements IUserService {
   constructor(
     private dataSource: DataSource,
     @InjectRepository(UserAccountEntity)
@@ -61,23 +61,25 @@ export class UsersService implements IUsersService {
     email: string,
     fields: T[],
   ): Promise<Maybe<Pick<UserAccountEntity, T>>> {
-    return this.userAccountRepository
-      .createQueryBuilder('user')
-      .select(fields.map((field) => `user.${field}`))
-      .where('user.email = :email', { email })
-      .getOne()
-      .then(fromNullable);
+    return fromNullable(
+      await this.userAccountRepository
+        .createQueryBuilder('user')
+        .select(fields.map((field) => `user.${field}`))
+        .where('user.email = :email', { email })
+        .getOne(),
+    );
   }
 
   async getById<T extends keyof UserAccountEntity>(
     id: string,
     fields: T[] = Object.keys(UserAccountEntity) as T[],
   ): Promise<Maybe<Pick<UserAccountEntity, T>>> {
-    return this.userAccountRepository
-      .createQueryBuilder('user')
-      .select(fields.map((field) => `user.${field}`))
-      .where('user.id = :id', { id })
-      .getOne()
-      .then(fromNullable);
+    return fromNullable(
+      await this.userAccountRepository
+        .createQueryBuilder()
+        .select(fields.map((field) => `user.${field}`))
+        .where('user.id = :id', { id })
+        .getOne(),
+    );
   }
 }

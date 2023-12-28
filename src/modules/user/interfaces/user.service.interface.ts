@@ -3,7 +3,7 @@ import { Maybe } from '@sweet-monads/maybe';
 import { UserWithSocialCredentialsDto } from '../dto/userWithSocialCredentials.dto';
 import { UserAccountEntity } from '../entities/userAccount.entity';
 
-export interface IUsersService {
+export interface IUserService {
   createWithSocialCredentials: (user: UserWithSocialCredentialsDto) => Promise<UserAccountEntity>;
   getAll: <T extends keyof UserAccountEntity>(fields: T[]) => Promise<Pick<UserAccountEntity, T>[]>;
   getByEmail: <T extends keyof UserAccountEntity>(

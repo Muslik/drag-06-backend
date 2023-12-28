@@ -9,7 +9,7 @@ import { DataSource } from 'typeorm';
 import { AppModule } from 'src/app.module';
 import { SessionEntity } from 'src/modules/session';
 import { RefreshTokenEntity } from 'src/modules/token';
-import { UserAccountEntity, UserSocialCredentialsEntity } from 'src/modules/users';
+import { UserAccountEntity, UserSocialCredentialsEntity } from 'src/modules/user';
 
 const email = 'Ivan@mail.ru';
 

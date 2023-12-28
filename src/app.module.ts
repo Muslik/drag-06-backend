@@ -15,7 +15,7 @@ import { config, Config, configValidationScheme, NODE_ENV } from './config';
 import { AuthModule, AuthGuard } from './modules/auth';
 import { SessionModule, SessionService } from './modules/session';
 import { TokenModule, TokenService } from './modules/token';
-import { UsersModule, UsersService } from './modules/users';
+import { UsersModule, UserService } from './modules/user';
 
 const pipes = [
   {
@@ -91,12 +91,12 @@ const guards: Provider[] = [
     }),
     AuthModule.forRootAsync({
       imports: [UsersModule, SessionModule, TokenModule],
-      useFactory: async (usersService: UsersService, sessionService: SessionService, tokenService: TokenService) => ({
+      useFactory: async (userService: UserService, sessionService: SessionService, tokenService: TokenService) => ({
         tokenService,
-        usersService,
+        userService,
         sessionService,
       }),
-      inject: [UsersService, SessionService, TokenService],
+      inject: [UserService, SessionService, TokenService],
     }),
     UsersModule,
     TokenModule,

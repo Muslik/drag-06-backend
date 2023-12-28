@@ -4,7 +4,7 @@ import { Either, left, right } from '@sweet-monads/either';
 import { google, Auth } from 'googleapis';
 
 import { Config } from 'src/config';
-import { UserWithSocialCredentialsDto } from 'src/modules/users';
+import { UserWithSocialCredentialsDto } from 'src/modules/user';
 
 import { InvalidTokenError } from '../../auth.errors';
 import { IAuthGoogleService, IGoogleAuthClientProvider } from './authGoogle.service.interface';

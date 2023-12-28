@@ -39,15 +39,13 @@ const dataSourceMock = {
   transaction: jest.fn(),
 };
 
-class MockRepository {
-  create = jest.fn();
-  findAndCount = jest.fn();
-  findOne = jest.fn();
-  save = jest.fn();
-  delete = jest.fn();
-}
-
-const mockRepository = new MockRepository();
+const mockRepository = {
+  create: jest.fn(),
+  findAndCount: jest.fn(),
+  findOne: jest.fn(),
+  save: jest.fn(),
+  delete: jest.fn(),
+};
 
 describe('Token Service', () => {
   let tokenService: TokenService;
@@ -108,8 +106,8 @@ describe('Token Service', () => {
     /* mockJwtService.verify.mockReturnValueOnce(mockJwtPayload); */
     mockRepository.findOne.mockResolvedValueOnce(mockRefreshTokenEntity);
 
-    const eitherResult = await tokenService.getRefreshedUserTokens('invalid-refresh-token', mockUserIdentity);
+    const result = await tokenService.getRefreshedUserTokens('invalid-refresh-token', mockUserIdentity);
 
-    expect(eitherResult.value).toBeInstanceOf(RefreshTokenInvalidError);
+    expect(result.value).toBeInstanceOf(RefreshTokenInvalidError);
   });
 });

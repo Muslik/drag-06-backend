@@ -18,15 +18,13 @@ const mockUser = {
   avatarColor: 'test-avatar-color',
 };
 
-class MockRepository {
-  create = jest.fn();
-  findAndCount = jest.fn();
-  findOne = jest.fn();
-  save = jest.fn();
-  delete = jest.fn();
-}
-
-const mockRepository = new MockRepository();
+const mockRepository = {
+  create: jest.fn(),
+  findAndCount: jest.fn(),
+  findOne: jest.fn(),
+  save: jest.fn(),
+  delete: jest.fn(),
+};
 
 const mockCreatedSession = {
   id: 'test-id',

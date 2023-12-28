@@ -1,6 +1,6 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Relation, RelationId } from 'typeorm';
 
-import { UserAccountEntity } from 'src/modules/users';
+import { UserAccountEntity } from 'src/modules/user';
 
 @Entity('sessions')
 export class SessionEntity {

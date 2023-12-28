@@ -1,7 +1,7 @@
 import { Either } from '@sweet-monads/either';
 import { Auth } from 'googleapis';
 
-import { UserWithSocialCredentialsDto } from 'src/modules/users';
+import { UserWithSocialCredentialsDto } from 'src/modules/user';
 
 import { InvalidTokenError } from '../../auth.errors';
 

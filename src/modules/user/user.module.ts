@@ -3,11 +3,10 @@ import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 
 import { UserAccountEntity } from './entities/userAccount.entity';
 import { UserSocialCredentialsEntity } from './entities/userSocialCredentials.entity';
-import { UsersController } from './users.controller';
-import { UsersService } from './users.service';
+import { UsersController } from './user.controller';
+import { UserService } from './user.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserAccountEntity, UserSocialCredentialsEntity])],
   providers: [
     {
       provide: getRepositoryToken(UserSocialCredentialsEntity),
@@ -17,9 +16,9 @@ import { UsersService } from './users.service';
       provide: getRepositoryToken(UserAccountEntity),
       useClass: UserAccountEntity,
     },
-    UsersService,
+    UserService,
   ],
-  exports: [UsersService],
   controllers: [UsersController],
+  exports: [UserService],
 })
 export class UsersModule {}

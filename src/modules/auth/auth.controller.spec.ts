@@ -43,7 +43,7 @@ const mockFastifyReply = {
 } as unknown as FastifyReply;
 
 const mockAuthServiceOptions = {
-  usersService: {
+  userService: {
     getByEmail: jest.fn(),
     getById: jest.fn(),
     createWithSocialCredentials: jest.fn(),
