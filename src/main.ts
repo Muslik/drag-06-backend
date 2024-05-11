@@ -6,7 +6,7 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
-import { NODE_ENV } from './config';
+import { NODE_ENV } from './infrastructure/config';
 import { ACCESS_TOKEN, SESSION_ID } from './infrastructure/decorators/auth.decorator';
 
 const getLoggerType = (): LogLevel[] => {

@@ -1,9 +1,9 @@
-import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { left, right } from '@sweet-monads/either';
 import { just, none } from '@sweet-monads/maybe';
 import { FastifyReply } from 'fastify';
 
+import { ConfigModule } from 'src/infrastructure/config';
 import { SESSION_ID } from 'src/infrastructure/decorators/auth.decorator';
 
 import { RefreshTokenInvalidError } from '../token';
@@ -125,7 +125,7 @@ describe('AuthController', () => {
     it('Should return user session if authorized', async () => {
       jest.spyOn(mockAuthService, 'getMe').mockResolvedValueOnce(just(mockUser));
 
-      const result = await authController.me('userId');
+      const result = await authController.me(1);
 
       expect(result).toEqual(mockUser);
     });
@@ -133,7 +133,7 @@ describe('AuthController', () => {
     it('should return error when not authorized', async () => {
       jest.spyOn(mockAuthService, 'getMe').mockResolvedValueOnce(none());
 
-      await expect(authController.me('unknownUserId')).rejects.toBeInstanceOf(UnauthorizedError);
+      await expect(authController.me(123)).rejects.toBeInstanceOf(UnauthorizedError);
     });
   });
 

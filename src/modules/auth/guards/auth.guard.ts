@@ -17,14 +17,12 @@ export class AuthGuard implements CanActivate {
     protected readonly tokenService: TokenService,
   ) {}
 
-  private async getUserIdFromSessionId(sessionId: string): Promise<Maybe<string>> {
+  private async getUserIdFromSessionId(sessionId: string): Promise<Maybe<number>> {
     if (!sessionId) {
       return none();
     }
 
-    return this.sessionService
-      .getSessionById(sessionId)
-      .then((maybe) => maybe.map(({ userAccountId }) => userAccountId));
+    return this.sessionService.getSessionById(sessionId).then((maybe) => maybe.map(({ userId }) => userId));
   }
 
   private getTokenFromHeader(headers: Record<string, string>): Maybe<string> {
@@ -43,7 +41,7 @@ export class AuthGuard implements CanActivate {
     return fromNullable(token);
   }
 
-  private getUserIdFromAccessToken(accessToken: string): Maybe<string> {
+  private getUserIdFromAccessToken(accessToken: string): Maybe<number> {
     if (!accessToken) {
       return none();
     }

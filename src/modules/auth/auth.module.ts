@@ -1,5 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+
+import { ConfigModule } from 'src/infrastructure/config';
 
 import {
   AUTH_JWT_SERVICE,
@@ -29,7 +30,6 @@ export class AuthModule {
       controllers: [AuthController],
       imports: options.imports,
       providers: [
-        ConfigService,
         {
           provide: AUTH_SERVICE_OPTIONS,
           useFactory: options.useFactory,

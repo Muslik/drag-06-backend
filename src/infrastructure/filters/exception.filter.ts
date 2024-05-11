@@ -3,7 +3,7 @@ import { I18nContext, I18nValidationError, I18nValidationException } from 'nestj
 import { formatI18nErrors } from 'nestjs-i18n/dist/utils/util';
 import { EMPTY, throwError } from 'rxjs';
 
-import { I18nTranslations } from 'src/generated/i18n.generated';
+import { I18nTranslations } from 'src/i18n';
 import {
   ExceptionBase,
   EXCEPTION_CODES,

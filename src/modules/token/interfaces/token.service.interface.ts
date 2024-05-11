@@ -13,5 +13,5 @@ export interface ITokenService {
     refreshToken: string,
     userIndentity: UserIdentity,
   ) => Promise<Either<RefreshTokenInvalidError, JWTTokensDto>>;
-  getUserTokens: (userId: string, userIndentity: UserIdentity) => Promise<JWTTokensDto>;
+  getUserTokens: (userId: number, userIndentity: UserIdentity) => Promise<JWTTokensDto>;
 }

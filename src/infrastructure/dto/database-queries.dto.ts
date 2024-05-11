@@ -3,7 +3,7 @@ import { Transform } from 'class-transformer';
 import { IsIn, IsOptional, IsNumberString } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
-import { I18nTranslations } from 'src/generated/i18n.generated';
+import { I18nTranslations } from 'src/i18n';
 
 type SortDirection = 'ASC' | 'DESC';
 

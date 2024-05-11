@@ -99,7 +99,7 @@ export class AuthController {
   })
   @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
   @Post('me')
-  async me(@UserId() userId: string) {
+  async me(@UserId() userId: number) {
     const userMaybe = await this.authService.getMe(userId);
 
     if (userMaybe.isJust()) {

@@ -1,5 +1,5 @@
 export type JWTPayload = {
-  userId: string;
+  userId: number;
   iat: number;
   exp: number;
   iss: string;

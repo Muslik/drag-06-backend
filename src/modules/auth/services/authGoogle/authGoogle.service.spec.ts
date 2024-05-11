@@ -1,7 +1,8 @@
-import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { left, right } from '@sweet-monads/either';
 import { google, oauth2_v2 } from 'googleapis';
+
+import { ConfigModule } from 'src/infrastructure/config';
 
 import { InvalidTokenError } from '../../auth.errors';
 import { AuthGoogleService, GOOGLE_AUTH_CLIENT_PROVIDER } from './authGoogle.service';

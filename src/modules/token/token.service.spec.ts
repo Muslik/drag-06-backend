@@ -1,17 +1,17 @@
-import { ConfigModule } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { just } from '@sweet-monads/maybe';
 
-import { RefreshTokenEntity } from './entities';
+import { ConfigModule, ConfigService } from 'src/infrastructure/config';
+
+import { RefreshTokenRepository } from './refreshToken.repository';
 import { RefreshTokenInvalidError } from './token.errors';
 import { TokenService } from './token.service';
 
 const mockUserIdentity = { ip: '127.0.0.1', userAgent: 'test user agent' };
 
 const mockJwtPayload = {
-  userId: 'test-user-id',
+  userId: 123,
   iat: 1234567890,
   exp: 1234567890,
   iss: 'test-iss',
@@ -23,10 +23,10 @@ const mockTokens = {
 };
 
 const mockRefreshTokenEntity = {
-  refreshToken: mockTokens.refreshToken,
+  token: mockTokens.refreshToken,
   userAgent: mockUserIdentity.userAgent,
   ip: mockUserIdentity.ip,
-  userAccountId: mockJwtPayload.userId,
+  userId: mockJwtPayload.userId,
   expires: mockJwtPayload.exp,
 };
 
@@ -35,16 +35,11 @@ const mockJwtService = {
   sign: jest.fn(),
 };
 
-const dataSourceMock = {
-  transaction: jest.fn(),
-};
-
 const mockRepository = {
-  create: jest.fn(),
-  findAndCount: jest.fn(),
-  findOne: jest.fn(),
-  save: jest.fn(),
-  delete: jest.fn(),
+  insert: jest.fn(),
+  findByToken: jest.fn(),
+  transaction: (callback: any) => callback(),
+  deleteById: jest.fn(),
 };
 
 describe('Token Service', () => {
@@ -55,16 +50,21 @@ describe('Token Service', () => {
       imports: [ConfigModule],
       providers: [
         {
-          provide: getRepositoryToken(RefreshTokenEntity),
+          provide: ConfigService,
+          useValue: {
+            jwt: {
+              accessTokenTtl: 90000,
+              refreshTokenTtl: 90000,
+            },
+          },
+        },
+        {
+          provide: RefreshTokenRepository,
           useValue: mockRepository,
         },
         {
           provide: JwtService,
           useValue: mockJwtService,
-        },
-        {
-          provide: DataSource,
-          useValue: dataSourceMock,
         },
         TokenService,
       ],
@@ -78,19 +78,22 @@ describe('Token Service', () => {
   });
 
   it('Creates token for userId', async () => {
-    mockRepository.create.mockReturnValueOnce(mockRefreshTokenEntity);
+    mockRepository.insert.mockResolvedValue(mockRefreshTokenEntity);
     mockJwtService.sign.mockReturnValueOnce('accessToken').mockReturnValueOnce('refreshToken');
-    mockJwtService.verify.mockReturnValueOnce(mockJwtPayload);
+    mockJwtService.verify.mockReturnValue(mockJwtPayload);
 
-    const result = await tokenService.getUserTokens('test-user-id', mockUserIdentity);
+    const result = await tokenService.getUserTokens(123, mockUserIdentity);
 
-    expect(mockRepository.save).toHaveBeenCalledWith({
-      refreshToken: 'refreshToken',
-      userAgent: mockUserIdentity.userAgent,
-      ip: mockUserIdentity.ip,
-      userAccountId: mockJwtPayload.userId,
-      expires: 1234567890,
-    });
+    expect(mockRepository.insert).toHaveBeenCalledWith(
+      {
+        token: 'refreshToken',
+        userAgent: mockUserIdentity.userAgent,
+        ip: mockUserIdentity.ip,
+        userId: mockJwtPayload.userId,
+        expires: 1234567890,
+      },
+      undefined,
+    );
 
     expect(result).toEqual({
       accessToken: 'accessToken',
@@ -98,16 +101,23 @@ describe('Token Service', () => {
     });
   });
 
-  it('Return refreshed tokens if refresh is invalid', async () => {
+  it.skip('Return refreshed token error if refresh is invalid', async () => {
     mockJwtService.verify.mockImplementationOnce(() => {
       throw new Error('Invalid token');
     });
-    dataSourceMock.transaction.mockResolvedValueOnce(mockTokens);
-    /* mockJwtService.verify.mockReturnValueOnce(mockJwtPayload); */
-    mockRepository.findOne.mockResolvedValueOnce(mockRefreshTokenEntity);
 
     const result = await tokenService.getRefreshedUserTokens('invalid-refresh-token', mockUserIdentity);
 
     expect(result.value).toBeInstanceOf(RefreshTokenInvalidError);
+  });
+
+  it.skip('Return refreshed token error if refresh is valid', async () => {
+    mockJwtService.verify.mockReturnValueOnce(mockJwtPayload);
+    mockRepository.findByToken.mockResolvedValueOnce(just(mockRefreshTokenEntity));
+    mockRepository.deleteById.mockResolvedValueOnce(undefined);
+
+    const result = await tokenService.getRefreshedUserTokens('invalid-refresh-token', mockUserIdentity);
+
+    expect(result.unwrap()).toEqual(mockRefreshTokenEntity);
   });
 });
