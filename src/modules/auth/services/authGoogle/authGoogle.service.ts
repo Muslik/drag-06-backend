@@ -1,9 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Either, left, right } from '@sweet-monads/either';
 import { google, Auth } from 'googleapis';
 
-import { Config } from 'src/config';
+import { ConfigService } from 'src/infrastructure/config';
 import { UserWithSocialCredentialsDto } from 'src/modules/user';
 
 import { InvalidTokenError } from '../../auth.errors';
@@ -11,11 +10,11 @@ import { IAuthGoogleService, IGoogleAuthClientProvider } from './authGoogle.serv
 
 @Injectable()
 export class GoogleAuthClientProvider {
-  constructor(private readonly configService: ConfigService<Config>) {}
+  constructor(private readonly configService: ConfigService) {}
 
   getOAuthClient(): Auth.OAuth2Client {
-    const clientID = this.configService.get('google.clientId', { infer: true });
-    const clientSecret = this.configService.get('google.clientSecret', { infer: true });
+    const clientID = this.configService.google.clientId;
+    const clientSecret = this.configService.google.clientSecret;
 
     return new google.auth.OAuth2(clientID, clientSecret);
   }

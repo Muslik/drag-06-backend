@@ -1,35 +1,20 @@
 import { Logger } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { just } from '@sweet-monads/maybe';
 
-import { UserAccountEntity } from './entities/userAccount.entity';
-import { UserSocialCredentialsEntity } from './entities/userSocialCredentials.entity';
+import { ConfigModule } from 'src/infrastructure/config';
+import { User } from 'src/infrastructure/database';
+
+import { UserRepository } from './repositories/user.repository';
+import { UserSocialCredentialsRepository } from './repositories/userSocialCredentials.repository';
 import { UserService } from './user.service';
 
-const dataSourceMock = {
-  transaction: jest.fn(),
-};
-
 const mockRepository = {
-  create: jest.fn(),
-  findAndCount: jest.fn(),
-  findOne: jest.fn(),
-  save: jest.fn(),
-  delete: jest.fn(),
-  createQueryBuilder: jest.fn(() => ({
-    getQuery: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    getOne: jest.fn(),
-    getMany: jest.fn(),
-  })),
+  findById: jest.fn(),
 };
 
 describe('User Service', () => {
   let userService: UserService;
-  let queryBuilderMock: ReturnType<typeof mockRepository.createQueryBuilder>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -37,15 +22,11 @@ describe('User Service', () => {
       providers: [
         Logger,
         {
-          provide: DataSource,
-          useValue: dataSourceMock,
-        },
-        {
-          provide: getRepositoryToken(UserAccountEntity),
+          provide: UserRepository,
           useValue: mockRepository,
         },
         {
-          provide: getRepositoryToken(UserSocialCredentialsEntity),
+          provide: UserSocialCredentialsRepository,
           useValue: mockRepository,
         },
         UserService,
@@ -53,55 +34,27 @@ describe('User Service', () => {
     }).compile();
 
     userService = module.get<UserService>(UserService);
-    queryBuilderMock = mockRepository.createQueryBuilder();
-    jest.spyOn(mockRepository, 'createQueryBuilder').mockReturnValue(queryBuilderMock);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should get user all users with specified fields', async () => {
-    const mockUsers: Pick<UserAccountEntity, 'id' | 'username' | 'email'>[] = [
-      {
-        id: 'test-id',
-        username: 'Test User',
-        email: 'test@example.com',
-      },
-      {
-        id: 'test-id-2',
-        username: 'Test User 2',
-        email: 'test2@example.com',
-      },
-    ];
-
-    queryBuilderMock.getMany.mockResolvedValueOnce(mockUsers);
-
-    const result = await userService.getAll(['id', 'username', 'email']);
-
-    expect(result).toEqual(mockUsers);
-
-    expect(queryBuilderMock.select).toHaveBeenCalledWith(['user.id', 'user.username', 'user.email']);
-  });
-
-  it('should get user by id with specified fields', async () => {
-    const mockUser: Pick<UserAccountEntity, 'id' | 'username' | 'email'> = {
-      id: 'test-id',
+  it('should get user by id', async () => {
+    const mockUser: User = {
+      id: 1,
       username: 'Test User',
       email: 'test@example.com',
-    };
+    } as User;
 
-    queryBuilderMock.getOne.mockResolvedValueOnce(mockUser);
+    mockRepository.findById.mockResolvedValueOnce(just(mockUser));
+    const result = await userService.getById(1);
 
-    const result = await userService.getById('test-id', ['id', 'username', 'email']);
-
-    expect(result.value).toEqual({
-      id: 'test-id',
+    expect(result.unwrap()).toEqual({
+      id: 1,
       username: 'Test User',
       email: 'test@example.com',
     });
-
-    expect(queryBuilderMock.select).toHaveBeenCalledWith(['user.id', 'user.username', 'user.email']);
-    expect(queryBuilderMock.where).toHaveBeenCalledWith('user.id = :id', { id: 'test-id' });
+    expect(mockRepository.findById).toHaveBeenCalledWith(1);
   });
 });

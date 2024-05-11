@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class UserAccountDto {
+export class UserDto {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
 
@@ -30,24 +30,4 @@ export class UserAccountDto {
 
   @ApiPropertyOptional()
   lastName: string | null;
-}
-
-export class UserAccountShortDto {
-  @ApiProperty({ type: String, format: 'uuid' })
-  id: string;
-
-  @ApiProperty()
-  username: string;
-
-  @ApiProperty()
-  email: string;
-
-  @ApiPropertyOptional()
-  firstName: string | null;
-
-  @ApiPropertyOptional()
-  lastName: string | null;
-
-  @ApiProperty()
-  avatarColor: string;
 }

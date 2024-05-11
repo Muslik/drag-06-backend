@@ -1,14 +1,15 @@
 import { Logger, Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { UserAccountEntity } from './entities/userAccount.entity';
-import { UserSocialCredentialsEntity } from './entities/userSocialCredentials.entity';
+import { DatabaseModule } from 'src/infrastructure/database';
+
+import { UserRepository } from './repositories/user.repository';
+import { UserSocialCredentialsRepository } from './repositories/userSocialCredentials.repository';
 import { UsersController } from './user.controller';
 import { UserService } from './user.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserAccountEntity, UserSocialCredentialsEntity])],
-  providers: [Logger, UserService],
+  imports: [DatabaseModule],
+  providers: [Logger, UserService, UserRepository, UserSocialCredentialsRepository],
   controllers: [UsersController],
   exports: [UserService],
 })

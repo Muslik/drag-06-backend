@@ -1,29 +1,20 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Maybe, fromNullable } from '@sweet-monads/maybe';
-import { DataSource, Repository, SelectQueryBuilder } from 'typeorm';
+import { Injectable } from '@nestjs/common';
+import { Maybe } from '@sweet-monads/maybe';
+
+import { User } from 'src/infrastructure/database';
 
 import { UserWithSocialCredentialsDto } from './dto/userWithSocialCredentials.dto';
-import { UserAccountEntity } from './entities/userAccount.entity';
-import { UserSocialCredentialsEntity } from './entities/userSocialCredentials.entity';
 import { IUserService } from './interfaces/user.service.interface';
 import { generateAvatarColor } from './lib/generateAvatarColor';
+import { UserRepository } from './repositories/user.repository';
+import { UserSocialCredentialsRepository } from './repositories/userSocialCredentials.repository';
 
 @Injectable()
 export class UserService implements IUserService {
   constructor(
-    private dataSource: DataSource,
-    @InjectRepository(UserAccountEntity)
-    private readonly userAccountRepository: Repository<UserAccountEntity>,
-    @InjectRepository(UserSocialCredentialsEntity)
-    private readonly userSocialCredentialsRepository: Repository<UserSocialCredentialsEntity>,
-    private readonly logger: Logger = new Logger(UserService.name),
+    private readonly userRepository: UserRepository,
+    private readonly userSocialCredentialsRepository: UserSocialCredentialsRepository,
   ) {}
-
-  private logQuery(queryBuilder: SelectQueryBuilder<UserAccountEntity>): void {
-    const query = queryBuilder.getQuery();
-    this.logger.debug(`Executing query: ${query}`);
-  }
 
   async createWithSocialCredentials({
     firstName,
@@ -31,64 +22,40 @@ export class UserService implements IUserService {
     email,
     providerType,
     providerUserId,
-  }: UserWithSocialCredentialsDto): Promise<UserAccountEntity> {
-    return this.dataSource.transaction(async (transactionEntityManager) => {
+  }: UserWithSocialCredentialsDto): Promise<User> {
+    return this.userRepository.transaction(async (tx) => {
       const avatarColor = generateAvatarColor();
 
-      const newUser = this.userAccountRepository.create({
-        firstName,
-        lastName,
-        email,
-        username: email,
-        avatarColor,
-      });
+      const [newUser] = await tx
+        .insert(this.userRepository.schema)
+        .values([
+          {
+            firstName,
+            lastName,
+            email,
+            username: email,
+            avatarColor,
+          },
+        ])
+        .returning();
 
-      await transactionEntityManager.save(newUser);
-
-      const userSocialCredentials = this.userSocialCredentialsRepository.create({
-        providerUserId,
-        providerType,
-        userAccount: newUser,
-      });
-      await transactionEntityManager.save(userSocialCredentials);
+      await this.userSocialCredentialsRepository.insert([
+        {
+          providerUserId,
+          providerType,
+          userId: newUser.id,
+        },
+      ]);
 
       return newUser;
     });
   }
 
-  getAll<T extends keyof UserAccountEntity>(fields: T[]): Promise<Pick<UserAccountEntity, T>[]> {
-    const query = this.userAccountRepository.createQueryBuilder('user').select(fields.map((field) => `user.${field}`));
-
-    this.logQuery(query);
-
-    return query.getMany();
+  async getByEmail(email: string): Promise<Maybe<User>> {
+    return this.userRepository.findByEmail(email);
   }
 
-  async getByEmail<T extends keyof UserAccountEntity>(
-    email: string,
-    fields: T[],
-  ): Promise<Maybe<Pick<UserAccountEntity, T>>> {
-    const query = this.userAccountRepository
-      .createQueryBuilder('user')
-      .select(fields.map((field) => `user.${field}`))
-      .where('user.email = :email', { email });
-
-    this.logQuery(query);
-
-    return fromNullable(await query.getOne());
-  }
-
-  async getById<T extends keyof UserAccountEntity>(
-    id: string,
-    fields: T[] = Object.keys(UserAccountEntity) as T[],
-  ): Promise<Maybe<Pick<UserAccountEntity, T>>> {
-    const query = this.userAccountRepository
-      .createQueryBuilder()
-      .select(fields.map((field) => `user.${field}`))
-      .where('user.id = :id', { id });
-
-    this.logQuery(query);
-
-    return fromNullable(await query.getOne());
+  async getById(id: number): Promise<Maybe<User>> {
+    return this.userRepository.findById(id);
   }
 }

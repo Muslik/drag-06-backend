@@ -1,6 +1,7 @@
-import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { left, right } from '@sweet-monads/either';
+
+import { ConfigModule } from 'src/infrastructure/config';
 
 import { AUTH_SERVICE, AUTH_SERVICE_OPTIONS } from '../../auth.constants';
 import { UnknownProviderError, InvalidTokenError } from '../../auth.errors';

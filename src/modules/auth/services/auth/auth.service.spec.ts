@@ -1,9 +1,9 @@
-import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { left, right } from '@sweet-monads/either';
 import { just, none } from '@sweet-monads/maybe';
 
-import { UserAccountEntity } from 'src/modules/user';
+import { ConfigModule } from 'src/infrastructure/config';
+import { User } from 'src/infrastructure/database';
 
 import { AUTH_SERVICE_OPTIONS, AUTH_GOOGLE_SERVICE } from '../../auth.constants';
 import { InvalidTokenError, UnknownProviderError } from '../../auth.errors';
@@ -54,7 +54,7 @@ describe('AuthService', () => {
       token: 'google-token',
     };
 
-    const expectedUser: UserAccountEntity = {} as UserAccountEntity;
+    const expectedUser: User = {} as User;
 
     jest.spyOn(mockAuthGoogleService, 'getUserInfo').mockResolvedValueOnce(right({ email: 'test@example.com' }));
     jest.spyOn(mockAuthServiceOptions.userService, 'getByEmail').mockResolvedValueOnce(just(expectedUser));
@@ -97,7 +97,7 @@ describe('AuthService', () => {
       token: 'invalid-token',
     };
 
-    const expectedUser: UserAccountEntity = {} as UserAccountEntity;
+    const expectedUser: User = {} as User;
 
     jest.spyOn(mockAuthGoogleService, 'getUserInfo').mockResolvedValueOnce(right({ email: 'test@example.com' }));
     jest.spyOn(mockAuthServiceOptions.userService, 'getByEmail').mockResolvedValueOnce(none());
@@ -110,20 +110,13 @@ describe('AuthService', () => {
   });
 
   it('should return current user if the user exists', async () => {
-    const expectedUser: UserAccountEntity = {} as UserAccountEntity;
+    const expectedUser: User = { id: 123, firstName: 'Ivan' } as User;
 
     jest.spyOn(mockAuthServiceOptions.userService, 'getById').mockResolvedValueOnce(just(expectedUser));
 
-    const result = await authService.getMe('userId');
+    const result = await authService.getMe(123);
 
     expect(result).toEqual(just(expectedUser));
-    expect(mockAuthServiceOptions.userService.getById).toHaveBeenCalledWith('userId', [
-      'id',
-      'email',
-      'firstName',
-      'lastName',
-      'avatarColor',
-      'username',
-    ]);
+    expect(mockAuthServiceOptions.userService.getById).toHaveBeenCalledWith(123);
   });
 });
