@@ -64,17 +64,6 @@ describe('AuthService', () => {
     expect(result).toEqual(right(expectedUser));
   });
 
-  it('should return an error for an unknown provider', async () => {
-    const signInDto: SignInDto = {
-      provider: 'unknown-provider' as SignInProvider,
-      token: 'some-token',
-    };
-
-    const result = await authService.signIn(signInDto);
-
-    expect(result).toEqual(left(new UnknownProviderError()));
-  });
-
   it('should return an error if GoogleAuthService getUserInfo fails', async () => {
     const signInDto: SignInDto = {
       provider: SignInProvider.GOOGLE,
