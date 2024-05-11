@@ -59,12 +59,11 @@ const guards: Provider[] = [
       inject: [ConfigService],
     }),
     I18nModule.forRoot({
-      fallbackLanguage: 'en',
+      fallbackLanguage: 'ru',
       loaderOptions: {
         path: path.join(__dirname, '/i18n/'),
-        watch: true,
+        watch: false,
       },
-      typesOutputPath: path.join(__dirname, '/generated/i18n.generated.ts'),
       resolvers: [{ use: QueryResolver, options: ['lang'] }, new HeaderResolver(['x-lang'])],
     }),
     AuthModule.forRootAsync({
