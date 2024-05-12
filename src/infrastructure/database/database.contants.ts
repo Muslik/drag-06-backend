@@ -1,1 +1,0 @@
-export const DRIZZLE_SERVICE = 'DRIZZLE_SERVICE';

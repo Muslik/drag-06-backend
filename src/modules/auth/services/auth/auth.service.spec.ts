@@ -6,7 +6,7 @@ import { ConfigModule } from 'src/infrastructure/config';
 import { User } from 'src/infrastructure/database';
 
 import { AUTH_SERVICE_OPTIONS, AUTH_GOOGLE_SERVICE } from '../../auth.constants';
-import { InvalidTokenError, UnknownProviderError } from '../../auth.errors';
+import { InvalidTokenError } from '../../auth.errors';
 import { SignInDto, SignInProvider } from '../../dto/signIn.dto';
 import { AuthService } from './auth.service';
 

@@ -1,9 +1,3 @@
-import { ExtractTablesWithRelations } from 'drizzle-orm';
-import { NodePgQueryResultHKT } from 'drizzle-orm/node-postgres';
-import { PgTransaction } from 'drizzle-orm/pg-core';
-
-import { DrizzleService, schema } from '../database';
-
 export class Paginated<T> {
   readonly count: number;
   readonly limit: number;
@@ -24,19 +18,8 @@ export type PaginatedQueryParams = {
   orderBy: OrderBy;
 };
 
-export type Tx = PgTransaction<NodePgQueryResultHKT, typeof schema, ExtractTablesWithRelations<typeof schema>>;
+export interface IRepositoryBase {}
 
-export interface IRepositoryBase {
-  transaction<T>(callback: (tx: Tx) => Promise<T>): Promise<T>;
-}
-
-export abstract class RepositoryBase<T> implements IRepositoryBase {
-  constructor(
-    private readonly dataService: DrizzleService,
-    public readonly schema: T,
-  ) {}
-
-  async transaction<T>(cb: (tx: Tx) => Promise<T>) {
-    return this.dataService.db.transaction(cb);
-  }
+export abstract class RepositoryBase implements IRepositoryBase {
+  constructor() {}
 }

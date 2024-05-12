@@ -1,20 +1,17 @@
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Injectable } from '@nestjs/common';
 
-import {
-  DrizzleService,
-  UserSocialCredentials,
-  UserSocialCredentialsSchema,
-  schema,
-} from 'src/infrastructure/database';
+import { UserSocialCredentials, UserSocialCredentialsCreate } from 'src/infrastructure/database';
 import { RepositoryBase } from 'src/infrastructure/ddd';
 
 @Injectable()
-export class UserSocialCredentialsRepository extends RepositoryBase<UserSocialCredentialsSchema> {
-  constructor(private readonly drizzleService: DrizzleService) {
-    super(drizzleService, schema.userSocialCredentials);
+export class UserSocialCredentialsRepository extends RepositoryBase {
+  constructor(private readonly txHost: TransactionHost<TransactionalAdapterPrisma>) {
+    super();
   }
 
-  async insert(entity: UserSocialCredentialsSchema['$inferInsert'][]): Promise<UserSocialCredentials[]> {
-    return await this.drizzleService.db.insert(this.schema).values(entity).returning();
+  async insert(entity: UserSocialCredentialsCreate): Promise<UserSocialCredentials> {
+    return await this.txHost.tx.userSocialCredentials.create({ data: entity });
   }
 }

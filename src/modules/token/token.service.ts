@@ -1,3 +1,4 @@
+import { Transactional } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Either, left, right } from '@sweet-monads/either';
@@ -6,7 +7,6 @@ import { v4 as uuid } from 'uuid';
 
 import { ConfigService } from 'src/infrastructure/config';
 import { RefreshToken } from 'src/infrastructure/database';
-import { Tx } from 'src/infrastructure/ddd';
 import { UserIdentity } from 'src/infrastructure/decorators';
 
 import { JWTTokensDto } from './dto/jwtTokens.dto';
@@ -37,12 +37,11 @@ export class TokenService implements ITokenService {
     return { accessToken, refreshToken };
   }
 
+  @Transactional()
   private async refreshUserTokens(currentToken: RefreshToken, userIdentity: UserIdentity): Promise<JWTTokensDto> {
-    return this.refreshTokenRepository.transaction(async (tx) => {
-      await this.refreshTokenRepository.deleteById(currentToken.id, tx);
+    await this.refreshTokenRepository.deleteById(currentToken.id);
 
-      return this.getUserTokens(currentToken.userId, userIdentity, tx);
-    });
+    return this.getUserTokens(currentToken.userId, userIdentity);
   }
 
   private async getCurrentRefreshToken(refreshToken: string): Promise<Maybe<RefreshToken>> {
@@ -78,21 +77,18 @@ export class TokenService implements ITokenService {
     return currentRefresh.isJust() ? right(currentRefresh.value) : left(new RefreshTokenInvalidError());
   }
 
-  async getUserTokens(userId: number, userIdentity: UserIdentity, tx?: Tx): Promise<JWTTokensDto> {
+  async getUserTokens(userId: number, userIdentity: UserIdentity): Promise<JWTTokensDto> {
     const tokens = this.createTokensByUserID(userId);
 
     return this.verifyToken(tokens.refreshToken)
-      .asyncMap(({ exp: expires }) => {
-        return this.refreshTokenRepository.insert(
-          {
-            userId,
-            token: tokens.refreshToken,
-            expires,
-            ...userIdentity,
-          },
-          tx,
-        );
-      })
+      .asyncMap(({ exp: expires }) =>
+        this.refreshTokenRepository.insert({
+          userId,
+          token: tokens.refreshToken,
+          expires,
+          ...userIdentity,
+        }),
+      )
       .then(() => tokens);
   }
 }

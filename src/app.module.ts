@@ -1,6 +1,9 @@
+import { ClsPluginTransactional } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { MiddlewareConsumer, Module, Provider } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
+import { ClsModule } from 'nestjs-cls';
 import { HeaderResolver, I18nModule, I18nValidationPipe, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 
@@ -9,7 +12,7 @@ import { ExceptionInterceptor } from 'src/infrastructure/interceptors/exception.
 import { LoggerMiddleware } from 'src/infrastructure/middlewares/logger.middleware';
 
 import { ConfigModule, ConfigService } from './infrastructure/config';
-import { DatabaseModule } from './infrastructure/database';
+import { DatabaseModule, PrismaService } from './infrastructure/database';
 import { AuthModule, AuthGuard } from './modules/auth';
 import { SessionModule, SessionService } from './modules/session';
 import { TokenModule, TokenService } from './modules/token';
@@ -48,6 +51,16 @@ const guards: Provider[] = [
   imports: [
     ConfigModule.forRoot(),
     DatabaseModule,
+    ClsModule.forRoot({
+      plugins: [
+        new ClsPluginTransactional({
+          imports: [DatabaseModule],
+          adapter: new TransactionalAdapterPrisma({
+            prismaInjectionToken: PrismaService,
+          }),
+        }),
+      ],
+    }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

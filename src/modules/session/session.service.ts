@@ -3,7 +3,7 @@ import { Maybe } from '@sweet-monads/maybe';
 import * as crypto from 'crypto';
 import { v4 as uuid } from 'uuid';
 
-import { Session, SessionWithUserAccount } from 'src/infrastructure/database';
+import { Session, SessionWithUser } from 'src/infrastructure/database';
 import { UserIdentity } from 'src/infrastructure/decorators';
 
 import { SessionRepository } from './session.repository';
@@ -17,7 +17,7 @@ export class SessionService implements ISessionService {
     return crypto.createHash('sha256').update(uuid()).update(crypto.randomBytes(256)).digest('hex');
   };
 
-  async getSessionUserById(sessionId: string): Promise<Maybe<SessionWithUserAccount>> {
+  async getSessionUserById(sessionId: string): Promise<Maybe<SessionWithUser>> {
     return this.sessionRepository.findSessionUserBySessionId(sessionId);
   }
 
