@@ -1,68 +1,65 @@
+import { TransactionHost, Transactional } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Injectable } from '@nestjs/common';
 import { Maybe, fromNullable } from '@sweet-monads/maybe';
-import { eq } from 'drizzle-orm';
 
-import { DrizzleService, SessionSchema, Session, schema, SessionWithUserAccount } from 'src/infrastructure/database';
-import { RepositoryBase, Tx } from 'src/infrastructure/ddd';
+import { Session, SessionCreate, SessionWithUser } from 'src/infrastructure/database';
+import { RepositoryBase } from 'src/infrastructure/ddd';
 
 @Injectable()
-export class SessionRepository extends RepositoryBase<SessionSchema> {
-  constructor(private readonly drizzleService: DrizzleService) {
-    super(drizzleService, schema.sessions);
+export class SessionRepository extends RepositoryBase {
+  constructor(private readonly txHost: TransactionHost<TransactionalAdapterPrisma>) {
+    super();
   }
 
-  private async updateLastAccessAt<T extends Session>(entity: T, tx?: Tx): Promise<void> {
+  private async updateLastAccessAt<T extends Session>(entity: T): Promise<void> {
     entity.lastAccessAt = new Date();
 
-    await this.update(entity, tx);
+    await this.update(entity);
   }
 
-  async insert(entity: SessionSchema['$inferInsert']): Promise<Session> {
-    const [createdRecord] = await this.drizzleService.db.insert(this.schema).values(entity).returning();
-
-    return createdRecord;
+  async insert(entity: SessionCreate): Promise<Session> {
+    return this.txHost.tx.session.create({ data: entity });
   }
 
-  async update<T extends Session>(entity: PartialWithId<T>, tx?: Tx): Promise<Session> {
-    const updateQuery = tx ? tx.update(this.schema) : this.drizzleService.db.update(this.schema);
-
-    const [updatedRecord] = await updateQuery.set(entity).where(eq(this.schema.id, entity.id)).returning();
-
-    return updatedRecord;
+  async update(entity: SessionCreate): Promise<Session> {
+    return this.txHost.tx.session.update({
+      where: {
+        id: entity.id,
+      },
+      data: entity,
+    });
   }
 
   async delete(sessionId: string): Promise<void> {
-    await this.drizzleService.db.delete(this.schema).where(eq(this.schema.sessionId, sessionId));
+    await this.txHost.tx.session.delete({ where: { sessionId } });
   }
 
   async deleteAll(userId: number): Promise<void> {
-    await this.drizzleService.db.delete(this.schema).where(eq(this.schema.userId, userId));
+    await this.txHost.tx.session.deleteMany({ where: { userId } });
   }
 
-  async findBySessionId(sessionId: string, tx?: Tx): Promise<Maybe<Session>> {
-    const query = tx ? tx.query : this.drizzleService.db.query;
-
-    return query.sessions
-      .findFirst({ where: eq(this.schema.sessionId, sessionId) })
+  @Transactional()
+  async findBySessionId(sessionId: string): Promise<Maybe<Session>> {
+    return this.txHost.tx.session
+      .findFirst({ where: { sessionId } })
       .then(fromNullable)
-      .then((maybeSession) =>
-        maybeSession.asyncMap(async (session) => {
-          await this.updateLastAccessAt(session, tx);
+      .then((maybeSession) => {
+        return maybeSession.asyncMap(async (session) => {
+          await this.updateLastAccessAt(session);
 
           return session;
-        }),
-      );
+        });
+      });
   }
 
-  async findSessionUserBySessionId(sessionId: string, tx?: Tx): Promise<Maybe<SessionWithUserAccount>> {
-    const query = tx ? tx.query : this.drizzleService.db.query;
-
-    return query.sessions
-      .findFirst({ where: eq(this.schema.sessionId, sessionId), with: { user: true } })
+  async findSessionUserBySessionId(sessionId: string): Promise<Maybe<SessionWithUser>> {
+    return this.txHost.tx.session
+      .findFirst({ where: { sessionId }, include: { user: true } })
       .then(fromNullable)
       .then((maybeSession) =>
         maybeSession.asyncMap(async (session) => {
-          await this.updateLastAccessAt(session, tx);
+          await this.updateLastAccessAt(session);
 
           return session;
         }),

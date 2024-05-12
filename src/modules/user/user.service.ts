@@ -1,3 +1,4 @@
+import { Transactional } from '@nestjs-cls/transactional';
 import { Injectable } from '@nestjs/common';
 import { Maybe } from '@sweet-monads/maybe';
 
@@ -16,6 +17,7 @@ export class UserService implements IUserService {
     private readonly userSocialCredentialsRepository: UserSocialCredentialsRepository,
   ) {}
 
+  @Transactional()
   async createWithSocialCredentials({
     firstName,
     lastName,
@@ -23,32 +25,23 @@ export class UserService implements IUserService {
     providerType,
     providerUserId,
   }: UserWithSocialCredentialsDto): Promise<User> {
-    return this.userRepository.transaction(async (tx) => {
-      const avatarColor = generateAvatarColor();
+    const avatarColor = generateAvatarColor();
 
-      const [newUser] = await tx
-        .insert(this.userRepository.schema)
-        .values([
-          {
-            firstName,
-            lastName,
-            email,
-            username: email,
-            avatarColor,
-          },
-        ])
-        .returning();
-
-      await this.userSocialCredentialsRepository.insert([
-        {
-          providerUserId,
-          providerType,
-          userId: newUser.id,
-        },
-      ]);
-
-      return newUser;
+    const newUser = await this.userRepository.insert({
+      firstName,
+      lastName,
+      email,
+      username: email,
+      avatarColor,
     });
+
+    await this.userSocialCredentialsRepository.insert({
+      providerUserId,
+      providerType,
+      userId: newUser.id,
+    });
+
+    return newUser;
   }
 
   async getByEmail(email: string): Promise<Maybe<User>> {

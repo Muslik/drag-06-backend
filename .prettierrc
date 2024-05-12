@@ -6,7 +6,6 @@
   "printWidth": 120,
   "importOrder": ["<THIRD_PARTY_MODULES>", "^src/(.*)$", "^[./]"],
   "importOrderSeparation": true,
-  "plugins": ["@trivago/prettier-plugin-sort-imports"],
-  "importOrderParserPlugins" : ["typescript", "classProperties", "decorators-legacy"]
+  "plugins": ["@trivago/prettier-plugin-sort-imports", "prettier-plugin-prisma"],
+  "importOrderParserPlugins": ["typescript", "classProperties", "decorators-legacy"]
 }
-

@@ -1,8 +1,12 @@
+import { ClsPluginTransactional } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { just } from '@sweet-monads/maybe';
+import { ClsModule } from 'nestjs-cls';
 
 import { ConfigModule, ConfigService } from 'src/infrastructure/config';
+import { DatabaseModule, PrismaService } from 'src/infrastructure/database';
 
 import { RefreshTokenRepository } from './refreshToken.repository';
 import { RefreshTokenInvalidError } from './token.errors';
@@ -38,7 +42,6 @@ const mockJwtService = {
 const mockRepository = {
   insert: jest.fn(),
   findByToken: jest.fn(),
-  transaction: (callback: any) => callback(),
   deleteById: jest.fn(),
 };
 
@@ -47,7 +50,19 @@ describe('Token Service', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule],
+      imports: [
+        ConfigModule,
+        ClsModule.forRoot({
+          plugins: [
+            new ClsPluginTransactional({
+              imports: [DatabaseModule],
+              adapter: new TransactionalAdapterPrisma({
+                prismaInjectionToken: PrismaService,
+              }),
+            }),
+          ],
+        }),
+      ],
       providers: [
         {
           provide: ConfigService,
@@ -84,16 +99,13 @@ describe('Token Service', () => {
 
     const result = await tokenService.getUserTokens(123, mockUserIdentity);
 
-    expect(mockRepository.insert).toHaveBeenCalledWith(
-      {
-        token: 'refreshToken',
-        userAgent: mockUserIdentity.userAgent,
-        ip: mockUserIdentity.ip,
-        userId: mockJwtPayload.userId,
-        expires: 1234567890,
-      },
-      undefined,
-    );
+    expect(mockRepository.insert).toHaveBeenCalledWith({
+      token: 'refreshToken',
+      userAgent: mockUserIdentity.userAgent,
+      ip: mockUserIdentity.ip,
+      userId: mockJwtPayload.userId,
+      expires: 1234567890,
+    });
 
     expect(result).toEqual({
       accessToken: 'accessToken',

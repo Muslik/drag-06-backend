@@ -1,9 +1,12 @@
+import { ClsPluginTransactional } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { just } from '@sweet-monads/maybe';
+import { ClsModule } from 'nestjs-cls';
 
 import { ConfigModule } from 'src/infrastructure/config';
-import { User } from 'src/infrastructure/database';
+import { DatabaseModule, PrismaService, User } from 'src/infrastructure/database';
 
 import { UserRepository } from './repositories/user.repository';
 import { UserSocialCredentialsRepository } from './repositories/userSocialCredentials.repository';
@@ -18,7 +21,19 @@ describe('User Service', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule],
+      imports: [
+        ConfigModule,
+        ClsModule.forRoot({
+          plugins: [
+            new ClsPluginTransactional({
+              imports: [DatabaseModule],
+              adapter: new TransactionalAdapterPrisma({
+                prismaInjectionToken: PrismaService,
+              }),
+            }),
+          ],
+        }),
+      ],
       providers: [
         Logger,
         {

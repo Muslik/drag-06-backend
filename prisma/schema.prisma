@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    Int                     @id() @default(autoincrement())
+  firstName             String?                 @map("first_name")
+  lastName              String?                 @map("last_name")
+  sex                   Boolean?
+  bio                   String?
+  email                 String                  @unique()
+  city                  String?
+  avatarColor           String                  @map("avatar_color")
+  username              String                  @unique()
+  phone                 String?                 @unique()
+  userSocialCredentials UserSocialCredentials[]
+  session               Session[]
+  refreshToken          RefreshToken[]
+  usersRoles            UsersRoles[]
+
+  @@map("users")
+}
+
+model UserSocialCredentials {
+  id             Int    @id() @default(autoincrement())
+  providerUserId String @unique() @map("provider_user_id")
+  providerType   String @unique() @map("provider_type")
+  user           User   @relation(fields: [userId], references: [id])
+  userId         Int    @map("user_id")
+
+  @@map("user_social_credentials")
+}
+
+model UsersRoles {
+  id     Int  @id() @default(autoincrement())
+  userId Int  @map("user_id")
+  roleId Int  @map("role_id")
+  user   User @relation(fields: [userId], references: [id])
+  role   Role @relation(fields: [roleId], references: [id])
+
+  @@map("users_roles")
+}
+
+model Role {
+  id          Int              @id() @default(autoincrement())
+  name        String           @unique()
+  description String?
+  permissions RolePermission[]
+  UsersRoles  UsersRoles[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          Int              @id() @default(autoincrement())
+  name        String           @unique()
+  description String?
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           Int        @id() @default(autoincrement())
+  role         Role       @relation(fields: [roleId], references: [id])
+  roleId       Int        @map("role_id")
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  permissionId Int        @map("permission_id")
+
+  @@map("roles_permissions")
+}
+
+model Session {
+  id           Int      @id() @default(autoincrement())
+  sessionId    String   @unique @map("session_id")
+  ip           String
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  lastAccessAt DateTime @default(now()) @map("last_access_at") @db.Timestamptz
+  userId       Int      @map("user_id")
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@map("sessions")
+}
+
+model RefreshToken {
+  id        Int      @id() @default(autoincrement())
+  token     String   @unique
+  userAgent String   @unique @map("user_agent")
+  ip        String   @unique
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  expires   Int
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("refresh_tokens")
+}
