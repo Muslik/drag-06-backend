@@ -1,16 +1,5 @@
 {
-  "validationFailed": "Validation failed",
-  "some": "someStr",
   "error": {
     "unexpected": "Unexpected error"
-  },
-  "validation": {
-    "isString": "field is not a string",
-    "isNumber": "field is not a number",
-    "isBoolean": "field is not a boolean",
-    "isNotEmpty": "field cannot be empty",
-    "isDate": "field is not a date",
-    "isEmail": "email is invalid",
-    "isIn": "field mUst be one of the following values: {constraints.0}"
   }
 }

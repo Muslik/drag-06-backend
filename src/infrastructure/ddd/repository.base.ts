@@ -17,9 +17,3 @@ export type PaginatedQueryParams = {
   offset: number;
   orderBy: OrderBy;
 };
-
-export interface IRepositoryBase {}
-
-export abstract class RepositoryBase implements IRepositoryBase {
-  constructor() {}
-}

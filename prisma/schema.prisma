@@ -20,7 +20,7 @@ model User {
   sex                   Boolean?
   bio                   String?
   email                 String                  @unique()
-  city                  String?
+  region                String?
   avatarColor           String                  @map("avatar_color")
   username              String                  @unique()
   phone                 String?                 @unique()
@@ -28,6 +28,7 @@ model User {
   session               Session[]
   refreshToken          RefreshToken[]
   usersRoles            UsersRoles[]
+  participants          TournamentParticipant[]
 
   @@map("users")
 }
@@ -104,4 +105,119 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id])
 
   @@map("refresh_tokens")
+}
+
+enum CarClass {
+  ET10
+  ET11
+  ET12
+  ET13
+  ET14
+  ET15
+}
+
+enum TournamentStatus {
+  CREATED
+  REGISTRATION
+  IN_PROGRESS
+  FINISHED
+}
+
+model Tournament {
+  id                    Int                       @id() @default(autoincrement())
+  title                 String
+  description           String                    @default("")
+  createdAt             DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  startDate             DateTime                  @map("start_date") @db.Timestamptz
+  fee                   Float                     @map("fee")
+  availableRacerNumbers String                    @map("available_racer_numbers") @db.Bit(99)
+  status                TournamentStatus          @default(CREATED)
+  participants          TournamentParticipant[]
+  qualifications        TournamentQualification[]
+
+  @@map("tournaments")
+}
+
+enum ParticipantStatus {
+  REGISTERED
+  CONFIRMED
+  TECHNICAL_DISQUALIFIED
+  DISQUALIFIED
+}
+
+model TournamentParticipant {
+  id            Int                      @id() @default(autoincrement())
+  firstName     String                   @map("first_name")
+  lastName      String                   @map("last_name")
+  email         String
+  region        String
+  phone         String
+  carBrand      String                   @map("car_brand")
+  carModel      String                   @map("car_model")
+  carClass      CarClass?                @map("car_class")
+  carNumber     String?                  @map("car_number")
+  racerNumber   Int                      @map("racer_number")
+  user          User                     @relation(fields: [userId], references: [id])
+  userId        Int                      @map("user_id")
+  status        ParticipantStatus
+  tournament    Tournament               @relation(fields: [tournamentId], references: [id])
+  tournamentId  Int                      @map("tournament_id")
+  qualification TournamentQualification?
+  agreement     Boolean
+  participant1  TournamentFinalRaces[]   @relation(name: "participant1")
+  participant2  TournamentFinalRaces[]   @relation(name: "participant2")
+
+  @@map("tournament_participants")
+}
+
+model TournamentQualification {
+  id             Int                   @id() @default(autoincrement())
+  participantId  Int                   @unique() @map("participant_id")
+  participant    TournamentParticipant @relation(fields: [participantId], references: [id])
+  tournament     Tournament            @relation(fields: [tournamentId], references: [id])
+  tournamentId   Int                   @map("tournament_id")
+  race1NetTime   Float                 @map("race_1_net_time")
+  race1GrossTime Float?                @map("race_1_gross_time")
+  race1Speed     Float?                @map("race_1_speed")
+  race2NetTime   Float                 @map("race_2_net_time")
+  race2GrossTime Float?                @map("race_2_gross_time")
+  race2Speed     Float?                @map("race_2_speed")
+  race3NetTime   Float                 @map("race_3_net_time")
+  race3GrossTime Float?                @map("race_3_gross_time")
+  race3Speed     Float?                @map("race_3_speed")
+  race4NetTime   Float                 @map("race_4_net_time")
+  race4GrossTime Float?                @map("race_4_gross_time")
+  race4Speed     Float?                @map("race_4_speed")
+  bestTime       Float                 @default(0) @map("best_time")
+
+  @@map("tournament_qualifications")
+}
+
+enum TournamentParticipantStatus {
+  DISQUALIFIED
+  TECHNICAL_DISQUALIFIED
+  FALSE_START
+  BREAKOUT
+}
+
+model TournamentFinalRaces {
+  id                    Int                          @id() @default(autoincrement())
+  participant1          TournamentParticipant?       @relation(name: "participant1", fields: [participant1Id], references: [id])
+  participant1Id        Int?                         @map("participant_1_id")
+  participant2          TournamentParticipant?       @relation(name: "participant2", fields: [participant2Id], references: [id])
+  participant2Id        Int?                         @map("participant_2_id")
+  // 0 - final stage, 1 - final third place, 2 - semi-final, 3 - quarter-final, ...
+  stage                 Int
+  class                 CarClass
+  participant1GrossTime Float?                       @map("participant_1_gross_time")
+  participant1NetTime   Float?                       @map("participant_1_net_time")
+  participant1Speed     Float?                       @map("participant_1_speed")
+  participant1Status    TournamentParticipantStatus? @map("participant_1_status")
+  participant2GrossTime Float?                       @map("participant_2_gross_time")
+  participant2NetTime   Float?                       @map("participant_2_net_time")
+  participant2Speed     Float?                       @map("participant_2_speed")
+  participant2Status    TournamentParticipantStatus? @map("participant_2_status")
+  winnerId              Int?                         @map("winner_id")
+
+  @@map("tournament_final_races")
 }

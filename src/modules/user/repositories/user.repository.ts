@@ -4,13 +4,11 @@ import { Injectable } from '@nestjs/common';
 import { Maybe, fromNullable } from '@sweet-monads/maybe';
 
 import { User, UserCreate } from 'src/infrastructure/database';
-import { Paginated, PaginatedQueryParams, RepositoryBase } from 'src/infrastructure/ddd';
+import { Paginated, PaginatedQueryParams } from 'src/infrastructure/ddd';
 
 @Injectable()
-export class UserRepository extends RepositoryBase {
-  constructor(private readonly txHost: TransactionHost<TransactionalAdapterPrisma>) {
-    super();
-  }
+export class UserRepository {
+  constructor(private readonly txHost: TransactionHost<TransactionalAdapterPrisma>) {}
 
   async findById(id: number): Promise<Maybe<User>> {
     return fromNullable(

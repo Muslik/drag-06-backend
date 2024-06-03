@@ -1,6 +1,6 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 
-import { ExceptionBase, RequestValidationError } from 'src/infrastructure/exceptions';
+import { ExceptionBase, RequestValidationErrorDto } from 'src/infrastructure/exceptions';
 
 export class ApiErrorResponse implements ExceptionBase {
   @ApiProperty({ description: 'Тип ошибки', example: 'NOT_FOUND' })
@@ -16,7 +16,7 @@ export class ApiErrorResponse implements ExceptionBase {
   readonly inner?: unknown;
 }
 
-@ApiExtraModels(RequestValidationError)
+@ApiExtraModels(RequestValidationErrorDto)
 export class ApiValidationErrorResponse implements ExceptionBase {
   @ApiProperty({ description: 'Тип ошибки', example: 'BAD_REQUEST' })
   readonly type: string;
@@ -29,11 +29,8 @@ export class ApiValidationErrorResponse implements ExceptionBase {
 
   @ApiProperty({
     description: 'Ошибки валидации',
-    type: 'array',
-    items: {
-      type: 'object',
-      $ref: getSchemaPath(RequestValidationError),
-    },
+    type: 'object',
+    additionalProperties: { $ref: getSchemaPath(RequestValidationErrorDto) },
   })
-  readonly inner: RequestValidationError[];
+  readonly inner: Record<string, RequestValidationErrorDto>;
 }

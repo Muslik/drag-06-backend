@@ -1,5 +1,5 @@
 import { CallHandler, ExecutionContext, Logger, NestInterceptor } from '@nestjs/common';
-import { I18nContext, I18nValidationException } from 'nestjs-i18n';
+import { I18nContext } from 'nestjs-i18n';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
@@ -29,10 +29,6 @@ export class ExceptionInterceptor implements NestInterceptor {
         return throwError(() => {
           this.logger.debug(`[INTERCEPT]: `, err);
           if (err instanceof ExceptionBase) {
-            return err;
-          }
-
-          if (err instanceof I18nValidationException) {
             return err;
           }
 

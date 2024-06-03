@@ -17,3 +17,13 @@ type NullablePartial<
 > = { [K in keyof NP]: NP[K] };
 
 type PartialWithId<T> = Partial<T> & { id: string | number };
+
+type NonFalsy<T> = T extends false | 0 | '' | null | undefined | 0n ? never : T;
+
+interface Array<T> {
+  filter(predicate: BooleanConstructor, thisArg?: any): NonFalsy<T>[];
+}
+
+interface ReadonlyArray<T> {
+  filter(predicate: BooleanConstructor, thisArg?: any): NonFalsy<T>[];
+}

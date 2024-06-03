@@ -1,12 +1,13 @@
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
-import { MiddlewareConsumer, Module, Provider } from '@nestjs/common';
+import { MiddlewareConsumer, Module, Provider, ValidationPipe } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ClsModule } from 'nestjs-cls';
-import { HeaderResolver, I18nModule, I18nValidationPipe, QueryResolver } from 'nestjs-i18n';
+import { HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 
+import { BadRequestException } from 'src/infrastructure/exceptions';
 import { GlobalExceptionFilter } from 'src/infrastructure/filters/exception.filter';
 import { ExceptionInterceptor } from 'src/infrastructure/interceptors/exception.interceptor';
 import { LoggerMiddleware } from 'src/infrastructure/middlewares/logger.middleware';
@@ -16,12 +17,23 @@ import { DatabaseModule, PrismaService } from './infrastructure/database';
 import { AuthModule, AuthGuard } from './modules/auth';
 import { SessionModule, SessionService } from './modules/session';
 import { TokenModule, TokenService } from './modules/token';
+import { TournamentModule } from './modules/tournament';
 import { UsersModule, UserService } from './modules/user';
 
 const pipes = [
   {
     provide: APP_PIPE,
-    useClass: I18nValidationPipe,
+    useFactory: () =>
+      new ValidationPipe({
+        exceptionFactory: (errors) =>
+          new BadRequestException(
+            'VALIDATION_ERROR',
+            'Ошибка валидации данных',
+            Object.fromEntries(
+              errors.map((error): [string, Record<string, string>] => [error.property, error.constraints || {}]),
+            ),
+          ),
+      }),
   },
 ];
 
@@ -91,6 +103,7 @@ const guards: Provider[] = [
     UsersModule,
     TokenModule,
     SessionModule,
+    TournamentModule,
   ],
   providers: [...interceptors, ...filters, ...guards, ...pipes],
 })

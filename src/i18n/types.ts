@@ -1,22 +1,10 @@
 import { Path } from 'nestjs-i18n';
 
-// FIXME: Почему то генераця не работает. Поэтому пока что вручную создаем типы
+import translationsJson from './ru/translations.json';
+
+// FIXME: Почему то генерация не работает. Поэтому пока что вручную создаем типы
 
 export type I18nTranslations = {
-  translations: {
-    error: {
-      unexpected: string;
-    };
-    validationFailed: string;
-    validation: {
-      isString: string;
-      isNumber: string;
-      isBoolean: string;
-      isNotEmpty: string;
-      isDate: string;
-      isEmail: string;
-      isIn: string;
-    };
-  };
+  translations: typeof translationsJson;
 };
 export type I18nPath = Path<I18nTranslations>;

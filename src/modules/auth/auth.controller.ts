@@ -9,7 +9,7 @@ import {
 } from '@nestjs/swagger';
 import { FastifyReply } from 'fastify';
 
-import { ApiErrorResponse, ApiValidationErrorResponse } from 'src/infrastructure/api/api-error.response';
+import { ApiErrorResponse, ApiValidationErrorResponse } from 'src/infrastructure/api';
 import { Cookies, Public, UserId, UserIdentity } from 'src/infrastructure/decorators';
 import { SESSION_ID } from 'src/infrastructure/decorators/auth.decorator';
 
