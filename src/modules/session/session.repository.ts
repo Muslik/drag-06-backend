@@ -4,13 +4,10 @@ import { Injectable } from '@nestjs/common';
 import { Maybe, fromNullable } from '@sweet-monads/maybe';
 
 import { Session, SessionCreate, SessionWithUser } from 'src/infrastructure/database';
-import { RepositoryBase } from 'src/infrastructure/ddd';
 
 @Injectable()
-export class SessionRepository extends RepositoryBase {
-  constructor(private readonly txHost: TransactionHost<TransactionalAdapterPrisma>) {
-    super();
-  }
+export class SessionRepository {
+  constructor(private readonly txHost: TransactionHost<TransactionalAdapterPrisma>) {}
 
   private async updateLastAccessAt<T extends Session>(entity: T): Promise<void> {
     entity.lastAccessAt = new Date();

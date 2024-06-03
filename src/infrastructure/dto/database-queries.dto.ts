@@ -1,25 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsIn, IsOptional, IsNumberString } from 'class-validator';
-import { i18nValidationMessage } from 'nestjs-i18n';
+import { IsIn, IsOptional, IsNumber } from 'class-validator';
 
-import { I18nTranslations } from 'src/i18n';
+type SortDirection = 'asc' | 'desc';
 
-type SortDirection = 'ASC' | 'DESC';
-
-const SortDirections: SortDirection[] = ['ASC', 'DESC'];
+const SortDirections: SortDirection[] = ['asc', 'desc'];
 
 export class BasePaginationDto {
-  @ApiProperty({ type: 'string' })
-  @IsNumberString({}, { message: i18nValidationMessage<I18nTranslations>('translations.validation.isNumber') })
+  @ApiProperty({
+    oneOf: [{ type: 'string' }, { type: 'number' }],
+  })
   @IsOptional()
-  @Transform((propertyone) => Number(propertyone))
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
   take?: number;
 
-  @ApiProperty({ type: 'string' })
-  @IsNumberString({}, { message: i18nValidationMessage<I18nTranslations>('translations.validation.isNumber') })
+  @ApiProperty({
+    oneOf: [{ type: 'string' }, { type: 'number' }],
+  })
   @IsOptional()
-  @Transform((propertyone) => Number(propertyone))
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
   skip?: number;
 }
 
@@ -27,7 +28,13 @@ export class BaseQueryDto extends BasePaginationDto {
   @ApiProperty({
     enum: SortDirections,
   })
-  @IsIn(SortDirections, { message: i18nValidationMessage<I18nTranslations>('translations.validation.isIn') })
   @IsOptional()
-  direction?: SortDirection;
+  @IsIn(SortDirections)
+  'order[direction]'?: SortDirection;
+
+  @ApiProperty({
+    type: 'string',
+  })
+  @IsOptional()
+  'order[field]'?: string;
 }

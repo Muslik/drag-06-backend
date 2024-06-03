@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 import { left, right } from '@sweet-monads/either';
 import { just, none } from '@sweet-monads/maybe';
 
@@ -26,7 +26,7 @@ describe('AuthService', () => {
   let authService: AuthService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const module = await Test.createTestingModule({
       imports: [ConfigModule],
       providers: [
         AuthService,

@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 import { ExceptionBase } from './exception.base';
 import { EXCEPTION_CODES } from './exception.codes';
@@ -23,29 +23,47 @@ export class InternalServerErrorException<T extends string = string> extends Exc
   public readonly type = EXCEPTION_CODES.INTERNAL_SERVER_ERROR;
 }
 
-// TODO: Доработать nested чтобы там был такой же тип RequestValidationError
-// Сейчас circular deps error
-export class RequestValidationError {
-  @ApiProperty({ description: 'Поле у которого возникла ошибка', example: 'email' })
-  property: string;
+/** Contains all fields from class-validator */
+export class RequestValidationErrorDto {
+  @ApiPropertyOptional()
+  isString?: string;
 
-  @ApiProperty({
-    description: 'Описание каждой ошибки',
-    example: {
-      isNotEmpty: 'Поле не может быть пустым',
-    },
-    type: 'object',
-    additionalProperties: {
-      type: 'string',
-    },
-  })
-  errors: { [key: string]: string };
+  @ApiPropertyOptional()
+  isNumberString?: string;
 
-  @ApiProperty({
-    type: 'array',
-    items: {
-      type: 'object',
-    },
-  })
-  nested: RequestValidationError[];
+  @ApiPropertyOptional()
+  isEmail?: string;
+
+  @ApiPropertyOptional()
+  isNumber?: string;
+
+  @ApiPropertyOptional()
+  isEnum?: string;
+
+  @ApiPropertyOptional()
+  isNotEmpty?: string;
+
+  @ApiPropertyOptional()
+  isArray?: string;
+
+  @ApiPropertyOptional()
+  isIn?: string;
+
+  @ApiPropertyOptional()
+  isDate?: string;
+
+  @ApiPropertyOptional()
+  isDateString?: string;
+
+  @ApiPropertyOptional()
+  arrayMaxSize?: string;
+
+  @ApiPropertyOptional()
+  arrayMinSize?: string;
+
+  @ApiPropertyOptional()
+  arrayUnique?: string;
+
+  @ApiPropertyOptional()
+  arrayNotEmpty?: string;
 }

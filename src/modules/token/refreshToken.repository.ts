@@ -4,13 +4,10 @@ import { Injectable } from '@nestjs/common';
 import { Maybe, fromNullable } from '@sweet-monads/maybe';
 
 import { RefreshToken, RefreshTokenCreate } from 'src/infrastructure/database';
-import { RepositoryBase } from 'src/infrastructure/ddd';
 
 @Injectable()
-export class RefreshTokenRepository extends RepositoryBase {
-  constructor(private readonly txHost: TransactionHost<TransactionalAdapterPrisma>) {
-    super();
-  }
+export class RefreshTokenRepository {
+  constructor(private readonly txHost: TransactionHost<TransactionalAdapterPrisma>) {}
 
   async insert(entity: RefreshTokenCreate): Promise<RefreshToken> {
     return this.txHost.tx.refreshToken.create({ data: entity });
