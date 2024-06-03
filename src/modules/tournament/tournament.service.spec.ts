@@ -5,12 +5,12 @@ import { TOURNAMENT_REPOSITORY } from './tournament.constants';
 import { TournamentService } from './tournament.service';
 
 const repositoryMock = {
-  findLatestActive: jest.fn(),
+  findOne: jest.fn(),
   findMany: jest.fn(),
   create: jest.fn(),
 };
 
-const availableNumbersBitsArr = Array.from({ length: 100 }, (_, i) => (i % 2 === 0 ? 1 : 0));
+const availableNumbersBitsArr = Array.from({ length: 99 }, (_, i) => (i % 2 === 0 ? 1 : 0));
 const availableNumbersArr = availableNumbersBitsArr.map((num, i) => (num === 1 ? i + 1 : null)).filter(Boolean);
 
 const mockTournament = {
@@ -44,16 +44,17 @@ describe('TournamentService', () => {
     jest.clearAllMocks();
   });
 
-  it('Should return latest available tournament', async () => {
-    repositoryMock.findLatestActive.mockResolvedValueOnce(
+  it('Should return tournament by id', async () => {
+    repositoryMock.findOne.mockResolvedValueOnce(
       just({
         ...mockTournament,
         availableRacerNumbers: availableNumbersBitsArr.join(''),
       }),
     );
 
-    const result = await tournamentService.getLatestAvailableTournament();
+    const result = await tournamentService.getTournamentById('1');
 
+    expect(repositoryMock.findOne).toHaveBeenCalledWith(1);
     expect(result.unwrap()).toEqual({ ...mockTournament, availableRacerNumbers: availableNumbersArr });
   });
 
@@ -65,23 +66,37 @@ describe('TournamentService', () => {
       },
     ]);
 
-    const result = await tournamentService.getTournaments({});
+    const query = {
+      'skip': 1,
+      'take': 10,
+      'order[field]': 'createdAt',
+      'order[direction]': 'asc',
+    } as const;
 
+    const result = await tournamentService.getTournaments(query);
+
+    expect(repositoryMock.findMany).toHaveBeenCalledWith(query);
     expect(result).toEqual([{ ...mockTournament, availableRacerNumbers: availableNumbersArr }]);
   });
 
   it('should create tournament and return it', async () => {
     const { id, ...tournament } = mockTournament;
-    repositoryMock.create.mockResolvedValueOnce({
+
+    const createMock = {
       ...tournament,
       availableRacerNumbers: availableNumbersBitsArr.join(''),
-    });
+    };
 
-    const result = await tournamentService.createTournament({
+    const createdMock = {
       ...tournament,
       availableRacerNumbers: availableNumbersArr,
-    });
+    };
 
-    expect(result).toEqual({ ...tournament, availableRacerNumbers: availableNumbersArr });
+    repositoryMock.create.mockResolvedValueOnce(createMock);
+
+    const result = await tournamentService.createTournament(createdMock);
+
+    expect(repositoryMock.create).toHaveBeenCalledWith(createMock);
+    expect(result).toEqual(createdMock);
   });
 });

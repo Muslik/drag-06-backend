@@ -13,7 +13,7 @@ export class BasePaginationDto {
   @IsOptional()
   @Transform(({ value }) => Number(value))
   @IsNumber()
-  take?: number;
+  'take'?: number;
 
   @ApiProperty({
     oneOf: [{ type: 'string' }, { type: 'number' }],
@@ -21,10 +21,8 @@ export class BasePaginationDto {
   @IsOptional()
   @Transform(({ value }) => Number(value))
   @IsNumber()
-  skip?: number;
-}
+  'skip'?: number;
 
-export class BaseQueryDto extends BasePaginationDto {
   @ApiProperty({
     enum: SortDirections,
   })

@@ -6,13 +6,26 @@ import { Maybe, fromNullable } from '@sweet-monads/maybe';
 import { Tournament, TournamentCreate } from 'src/infrastructure/database';
 
 import { TournamentQueryDto } from './dto/tournamentQuery.dto';
+import { ITournamentRepository } from './tournament.repository.interface';
 
 @Injectable()
-export class TournamentRepository {
+export class TournamentRepository implements ITournamentRepository {
   constructor(private readonly txHost: TransactionHost<TransactionalAdapterPrisma>) {}
 
   async create(entity: TournamentCreate): Promise<Tournament> {
     return this.txHost.tx.tournament.create({ data: entity });
+  }
+
+  async findOne(id: number): Promise<Maybe<Tournament>> {
+    return this.txHost.tx.tournament
+      .findFirst({
+        where: { id },
+        include: {
+          qualifications: true,
+          participants: true,
+        },
+      })
+      .then(fromNullable);
   }
 
   async findMany(query: TournamentQueryDto): Promise<Tournament[]> {
@@ -31,8 +44,8 @@ export class TournamentRepository {
   }
 
   async findLatestActive(): Promise<Maybe<Tournament>> {
-    return fromNullable(
-      this.txHost.tx.tournament.findMany({
+    return this.txHost.tx.tournament
+      .findMany({
         where: {
           status: 'REGISTRATION',
         },
@@ -40,7 +53,7 @@ export class TournamentRepository {
           createdAt: 'desc',
         },
         take: 1,
-      })[0],
-    );
+      })
+      .then(([first]) => fromNullable(first));
   }
 }

@@ -44,21 +44,15 @@ export class TournamentService implements ITournamentService {
     };
   }
 
-  async getLatestAvailableTournament(): Promise<Maybe<TournamentDto>> {
-    const maybe = await this.tournamentRepository.findLatestActive();
-
-    return maybe.map(this.toTournamentDto);
-  }
-
   async getTournaments(query: TournamentQueryDto): Promise<TournamentDto[]> {
-    const tournaments = await this.tournamentRepository.findMany(query);
-
-    return tournaments.map(this.toTournamentDto);
+    return this.tournamentRepository.findMany(query).then((items) => items.map(this.toTournamentDto));
   }
 
   async createTournament(tournament: TournamentCreateDto): Promise<TournamentDto> {
-    const createdTournament = await this.tournamentRepository.create(this.toTournamentEntity(tournament));
+    return this.tournamentRepository.create(this.toTournamentEntity(tournament)).then(this.toTournamentDto);
+  }
 
-    return this.toTournamentDto(createdTournament);
+  async getTournamentById(id: string): Promise<Maybe<TournamentDto>> {
+    return this.tournamentRepository.findOne(Number(id)).then((maybe) => maybe.map(this.toTournamentDto));
   }
 }

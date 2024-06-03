@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 import {
   ApiOperation,
   ApiTags,
@@ -7,10 +7,12 @@ import {
   ApiInternalServerErrorResponse,
   ApiUnauthorizedResponse,
   ApiOkResponse,
+  ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 
 import { ApiErrorResponse, ApiValidationErrorResponse } from 'src/infrastructure/api/api-error.response';
 import { Public } from 'src/infrastructure/decorators';
+import { RateLimitException } from 'src/infrastructure/exceptions';
 
 import { TournamentCreateDto } from './dto/createTournament.dto';
 import { TournamentDto } from './dto/tournament.dto';
@@ -20,6 +22,9 @@ import { ITournamentService } from './tournament.service.interface';
 
 @ApiTags('tournaments')
 @Controller('tournaments')
+@ApiTooManyRequestsResponse({ type: RateLimitException, status: 429, description: 'Too many requests' })
+@ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
+@ApiUnauthorizedResponse({ description: 'User not authorized', type: ApiErrorResponse })
 export class TournamentController {
   constructor(@Inject(TOURNAMENT_SERVICE) private tournamentService: ITournamentService) {}
 
@@ -30,24 +35,22 @@ export class TournamentController {
     description: 'Tournaments list',
     isArray: true,
   })
-  @ApiUnauthorizedResponse({ description: 'User not authorized', type: ApiErrorResponse })
-  @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
   @Get('')
   async getTournaments(@Query() query: TournamentQueryDto): Promise<TournamentDto[]> {
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
     return this.tournamentService.getTournaments(query);
   }
 
   @Public()
-  @ApiOperation({ summary: 'Get latest available tournament' })
+  @ApiOperation({ summary: 'Get tournament by id' })
   @ApiOkResponse({
     type: TournamentDto,
-    description: 'Latest available tournament',
+    description: 'Tournament',
   })
-  @ApiUnauthorizedResponse({ description: 'User not authorized', type: ApiErrorResponse })
-  @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
-  @Get('latest-available')
-  async getLatestAvailableTournament(): Promise<TournamentDto | null> {
-    return this.tournamentService.getLatestAvailableTournament().then((maybe) =>
+  @Get(':id')
+  async getTournamentById(@Param('id') id: string): Promise<TournamentDto | null> {
+    return this.tournamentService.getTournamentById(id).then((maybe) =>
       maybe.fold(
         () => null,
         (value) => value,
@@ -62,8 +65,6 @@ export class TournamentController {
     description: 'Return created tournament',
   })
   @ApiBadRequestResponse({ description: 'Bad request', type: ApiValidationErrorResponse })
-  @ApiUnauthorizedResponse({ description: 'User not authorized', type: ApiErrorResponse })
-  @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
   @Post('')
   async createTournament(@Body() tournament: TournamentCreateDto): Promise<TournamentDto> {
     return this.tournamentService.createTournament(tournament);

@@ -7,5 +7,5 @@ import { TournamentQueryDto } from './dto/tournamentQuery.dto';
 export interface ITournamentRepository {
   create(entity: TournamentCreate): Promise<Tournament>;
   findMany(query: TournamentQueryDto): Promise<Tournament[]>;
-  findLatestActive(): Promise<Maybe<Tournament>>;
+  findOne(id: number): Promise<Maybe<Tournament>>;
 }

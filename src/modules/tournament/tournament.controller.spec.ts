@@ -10,15 +10,16 @@ const mockTournament = {
   fee: 100,
   title: 'test-title',
   status: 'CREATED' as const,
+  createdAt: new Date(),
   startDate: new Date(),
   description: 'test-description',
   availableRacerNumbers: [1, 2, 3],
 };
 
 const mockTournamentService: ITournamentService = {
-  getLatestAvailableTournament: jest.fn(),
   getTournaments: jest.fn(),
   createTournament: jest.fn(),
+  getTournamentById: jest.fn(),
 };
 
 describe('TournamentController', () => {
@@ -41,26 +42,36 @@ describe('TournamentController', () => {
     it('should return tournaments list', async () => {
       jest.spyOn(mockTournamentService, 'getTournaments').mockResolvedValueOnce([mockTournament]);
 
-      const result = await tournamentController.getTournaments({});
+      const query = {
+        'skip': 1,
+        'take': 10,
+        'order[field]': 'createdAt',
+        'order[direction]': 'asc',
+      } as const;
 
+      const result = await tournamentController.getTournaments(query);
+
+      expect(mockTournamentService.getTournaments).toHaveBeenCalledWith(query);
       expect(result).toEqual([mockTournament]);
     });
   });
 
-  describe('GET /latest-available', () => {
-    it('should return latest available tournament if available', async () => {
-      jest.spyOn(mockTournamentService, 'getLatestAvailableTournament').mockResolvedValueOnce(just(mockTournament));
+  describe('GET /:id', () => {
+    it('should return tournament by id', async () => {
+      jest.spyOn(mockTournamentService, 'getTournamentById').mockResolvedValueOnce(just(mockTournament));
 
-      const result = await tournamentController.getLatestAvailableTournament();
+      const result = await tournamentController.getTournamentById(1);
 
+      expect(mockTournamentService.getTournamentById).toHaveBeenCalledWith(1);
       expect(result).toEqual(mockTournament);
     });
 
     it('should return null if not available', async () => {
-      jest.spyOn(mockTournamentService, 'getLatestAvailableTournament').mockResolvedValueOnce(none());
+      jest.spyOn(mockTournamentService, 'getTournamentById').mockResolvedValueOnce(none());
 
-      const result = await tournamentController.getLatestAvailableTournament();
+      const result = await tournamentController.getTournamentById(1);
 
+      expect(mockTournamentService.getTournamentById).toHaveBeenCalledWith(1);
       expect(result).toEqual(null);
     });
   });
@@ -71,6 +82,7 @@ describe('TournamentController', () => {
 
       const result = await tournamentController.createTournament(mockTournament);
 
+      expect(mockTournamentService.createTournament).toHaveBeenCalledWith(mockTournament);
       expect(result).toEqual(mockTournament);
     });
   });

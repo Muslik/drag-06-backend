@@ -11,4 +11,6 @@ export class TournamentDto extends TournamentCreateDto {
   description: string;
 
   status: TournamentStatus;
+
+  createdAt: Date;
 }

@@ -1,1 +1,1 @@
-export { BasePaginationDto, BaseQueryDto } from './database-queries.dto';
+export { BasePaginationDto } from './database-queries.dto';

@@ -14,6 +14,7 @@ import {
   IsInt,
   Max,
   MaxLength,
+  MinDate,
 } from 'class-validator';
 
 import { MAX_RACER_NUMBER } from '../tournament.service';
@@ -33,6 +34,7 @@ export class TournamentCreateDto {
   @ApiProperty({ example: '2021-10-10T10:00:00.000Z' })
   @Transform(({ value }) => new Date(value))
   @IsDate()
+  @MinDate(new Date())
   startDate: Date;
 
   @ApiProperty({ example: 2000 })

@@ -5,7 +5,7 @@ import { TournamentDto } from './dto/tournament.dto';
 import { TournamentQueryDto } from './dto/tournamentQuery.dto';
 
 export interface ITournamentService {
-  getLatestAvailableTournament: () => Promise<Maybe<TournamentDto>>;
   getTournaments: (query: TournamentQueryDto) => Promise<TournamentDto[]>;
+  getTournamentById: (id: string) => Promise<Maybe<TournamentDto>>;
   createTournament: (tournament: TournamentCreateDto) => Promise<TournamentDto>;
 }
