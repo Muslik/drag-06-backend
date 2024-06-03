@@ -3,6 +3,7 @@ import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-pr
 import { MiddlewareConsumer, Module, Provider, ValidationPipe } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ClsModule } from 'nestjs-cls';
 
 import { BadRequestException } from 'src/infrastructure/exceptions';
@@ -12,6 +13,7 @@ import { LoggerMiddleware } from 'src/infrastructure/middlewares/logger.middlewa
 
 import { ConfigModule, ConfigService } from './infrastructure/config';
 import { DatabaseModule, PrismaService } from './infrastructure/database';
+import { RateLimitGuard } from './infrastructure/guards/rateLimit.guard';
 import { AuthModule, AuthGuard } from './modules/auth';
 import { SessionModule, SessionService } from './modules/session';
 import { TokenModule, TokenService } from './modules/token';
@@ -54,11 +56,21 @@ const guards: Provider[] = [
     provide: APP_GUARD,
     useExisting: AuthGuard,
   },
+  {
+    provide: APP_GUARD,
+    useClass: RateLimitGuard,
+  },
   AuthGuard,
 ];
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10000,
+      },
+    ]),
     ConfigModule.forRoot(),
     DatabaseModule,
     ClsModule.forRoot({
