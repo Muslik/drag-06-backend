@@ -3,32 +3,38 @@ import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from 
 import { ExceptionBase, RequestValidationErrorDto } from 'src/infrastructure/exceptions';
 
 export class ApiErrorResponse implements ExceptionBase {
-  @ApiProperty({ description: 'Тип ошибки', example: 'NOT_FOUND' })
+  @ApiProperty({ description: 'Error status code', example: 401 })
+  readonly statusCode: number;
+
+  @ApiProperty({ description: 'Error type', example: 'UNAUTHORIZED' })
   readonly type: string;
 
-  @ApiProperty({ description: 'Код ошибки', example: 'EMPLOYEE_NOT_FOUND_ERROR_CODE' })
+  @ApiProperty({ description: 'Error code', example: 'AUTH.INVALID_GRANT' })
   readonly code: string;
 
-  @ApiProperty({ description: 'Человеческое описание ошибки', example: 'Пользователь не найден' })
+  @ApiProperty({ description: 'Error message', example: 'Token is not valid' })
   readonly message: string;
 
-  @ApiPropertyOptional({ description: 'Подробная информация об ошибке' })
+  @ApiPropertyOptional({ description: 'Error additional info' })
   readonly inner?: unknown;
 }
 
 @ApiExtraModels(RequestValidationErrorDto)
 export class ApiValidationErrorResponse implements ExceptionBase {
-  @ApiProperty({ description: 'Тип ошибки', example: 'BAD_REQUEST' })
+  @ApiProperty({ description: 'Error status code', example: 400 })
+  readonly statusCode: number;
+
+  @ApiProperty({ description: 'Error type', example: 'BAD_REQUEST' })
   readonly type: string;
 
-  @ApiProperty({ description: 'Код ошибки', example: 'VALIDATION_ERROR' })
+  @ApiProperty({ description: 'Error code', example: 'VALIDATION_ERROR' })
   readonly code: string;
 
-  @ApiProperty({ description: 'Человеческое описание ошибки', example: 'Validation failed' })
+  @ApiProperty({ description: 'Error message', example: 'Validation failed' })
   readonly message: string;
 
   @ApiProperty({
-    description: 'Ошибки валидации',
+    description: 'Validation errors',
     type: 'object',
     additionalProperties: { $ref: getSchemaPath(RequestValidationErrorDto) },
   })

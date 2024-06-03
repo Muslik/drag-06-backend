@@ -1,5 +1,6 @@
 export abstract class ExceptionBase<T extends string = string> {
   abstract type: string;
+  abstract statusCode: number;
 
   constructor(
     public readonly code: T,
