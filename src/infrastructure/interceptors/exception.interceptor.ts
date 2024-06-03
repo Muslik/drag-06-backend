@@ -1,22 +1,18 @@
 import { CallHandler, ExecutionContext, Logger, NestInterceptor } from '@nestjs/common';
-import { I18nContext } from 'nestjs-i18n';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { I18nTranslations } from 'src/i18n';
-import { ExceptionBase, InternalServerErrorException } from 'src/infrastructure/exceptions';
+import { EXCEPTION_CODES, ExceptionBase, InternalServerErrorException } from 'src/infrastructure/exceptions';
 
 export class UnexpectedException extends InternalServerErrorException {
   constructor(inner?: unknown) {
-    const i18n = I18nContext.current<I18nTranslations>();
     let currentInner = inner;
-    const message = i18n?.translate('translations.error.unexpected') ?? '';
 
     if (process.env.NODE_ENV !== 'development') {
       currentInner = undefined;
     }
 
-    super('UNEXPECTED_EXCEPTION', message, currentInner);
+    super(`${EXCEPTION_CODES.INTERNAL_SERVER_ERROR}.UNEXPECTED_EXCEPTION`, 'Internal server error', currentInner);
   }
 }
 

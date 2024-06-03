@@ -4,8 +4,6 @@ import { MiddlewareConsumer, Module, Provider, ValidationPipe } from '@nestjs/co
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ClsModule } from 'nestjs-cls';
-import { HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
-import * as path from 'path';
 
 import { BadRequestException } from 'src/infrastructure/exceptions';
 import { GlobalExceptionFilter } from 'src/infrastructure/filters/exception.filter';
@@ -82,14 +80,6 @@ const guards: Provider[] = [
         },
       }),
       inject: [ConfigService],
-    }),
-    I18nModule.forRoot({
-      fallbackLanguage: 'ru',
-      loaderOptions: {
-        path: path.join(__dirname, '/i18n/'),
-        watch: false,
-      },
-      resolvers: [{ use: QueryResolver, options: ['lang'] }, new HeaderResolver(['x-lang'])],
     }),
     AuthModule.forRootAsync({
       imports: [UsersModule, SessionModule, TokenModule],
