@@ -25,6 +25,7 @@ import { IAuthSessionService } from './services/authSession/authSession.service.
 
 @ApiTags('auth')
 @Controller('auth')
+@ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
 export class AuthController {
   constructor(
     @Inject(AUTH_SESSION_SERVICE) private authSessionService: IAuthSessionService,
@@ -39,7 +40,6 @@ export class AuthController {
     type: UserAuthDto,
   })
   @ApiBadRequestResponse({ description: 'Bad request', type: ApiValidationErrorResponse })
-  @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
   @Post('sign-in')
   async signIn(
     @Body() signInDto: SignInDto,
@@ -63,7 +63,6 @@ export class AuthController {
   @ApiOperation({ summary: 'Authorize and get JWT tokens' })
   @ApiCreatedResponse({ description: 'User successfully authorized', type: JWTTokensDto })
   @ApiBadRequestResponse({ description: 'Bad request', type: ApiValidationErrorResponse })
-  @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
   @Post('jwt/sign-in')
   async jwtSignIn(@Body() signInDto: SignInDto, @UserIdentity() userIdentity: UserIdentity) {
     return this.authJwtService.signIn(signInDto, userIdentity).then((either) =>
@@ -81,7 +80,6 @@ export class AuthController {
   })
   @ApiBadRequestResponse({ description: 'Bad request', type: ApiValidationErrorResponse })
   @ApiUnauthorizedResponse({ description: 'User not authorized', type: ApiErrorResponse })
-  @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
   @Post('jwt/refresh')
   async refreshTokens(@UserIdentity() userIdentity: UserIdentity, @Body() refreshToken: RefreshTokenDto) {
     return this.authJwtService.refresh(refreshToken, userIdentity).then((either) =>
@@ -97,7 +95,6 @@ export class AuthController {
     description: 'User not authorized',
     type: ApiErrorResponse,
   })
-  @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
   @Post('me')
   async me(@UserId() userId: number) {
     const userMaybe = await this.authService.getMe(userId);
@@ -115,7 +112,6 @@ export class AuthController {
     description: 'User not authorized',
     type: ApiErrorResponse,
   })
-  @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
   @Post('logout')
   async logout(@Res({ passthrough: true }) response: FastifyReply, @Cookies() { sessionId }: Record<string, string>) {
     if (!sessionId) {
