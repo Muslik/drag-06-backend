@@ -6,7 +6,7 @@ import { User } from 'src/infrastructure/database';
 
 import { AUTH_SERVICE_OPTIONS, AUTH_GOOGLE_SERVICE } from '../../auth.constants';
 import { InvalidTokenError } from '../../auth.errors';
-import { SignInDto } from '../../dto/signIn.dto';
+import { SignInDtoGoogle, SignInDtoTelegram, SignInProvider } from '../../dto/signIn.dto';
 import { UserAuthDto } from '../../dto/userAuth.dto';
 import { IAuthServiceOptions } from '../../interfaces/authServiceOptions';
 import { IAuthGoogleService } from '../authGoogle/authGoogle.service.interface';
@@ -19,11 +19,7 @@ export class AuthService implements IAuthService {
     @Inject(AUTH_SERVICE_OPTIONS) private authServiceOptions: IAuthServiceOptions,
   ) {}
 
-  async signIn(signInDto: SignInDto): Promise<Either<InvalidTokenError, UserAuthDto>> {
-    return this.signInGoogle(signInDto.token);
-  }
-
-  toUserAuthDto(user: Pick<User, keyof UserAuthDto>): UserAuthDto {
+  private toUserAuthDto(user: Pick<User, keyof UserAuthDto>): UserAuthDto {
     const userAuth = new UserAuthDto();
 
     userAuth.id = user.id;
@@ -32,6 +28,7 @@ export class AuthService implements IAuthService {
     userAuth.lastName = user.lastName;
     userAuth.email = user.email;
     userAuth.avatarColor = user.avatarColor;
+    userAuth.role = user.role;
 
     return userAuth;
   }
@@ -42,7 +39,32 @@ export class AuthService implements IAuthService {
       .then((maybe) => maybe.map((user) => this.toUserAuthDto(user)));
   }
 
-  private async signInGoogle(token: string): Promise<Either<InvalidTokenError, UserAuthDto>> {
+  async signInTelegram(signInInfo: SignInDtoTelegram): Promise<UserAuthDto> {
+    const { userId, username, firstName, lastName = '' } = signInInfo;
+
+    const userMaybe = await this.authServiceOptions.userService
+      .getByProviderUserId(userId)
+      .then((maybe) => maybe.map(this.toUserAuthDto));
+
+    if (userMaybe.isJust()) {
+      return userMaybe.value;
+    }
+
+    const newUser = await this.authServiceOptions.userService
+      .createWithSocialCredentials({
+        username,
+        email: '',
+        lastName,
+        firstName,
+        providerType: SignInProvider.TELEGRAM,
+        providerUserId: userId,
+      })
+      .then((userAccount) => this.toUserAuthDto(userAccount));
+
+    return newUser;
+  }
+
+  async signInGoogle({ token }: SignInDtoGoogle): Promise<Either<InvalidTokenError, UserAuthDto>> {
     const googleUserInfoEither = await this.authGoogleService.getUserInfo(token);
 
     const userEither = await googleUserInfoEither.asyncMap((googleUserInfo) =>

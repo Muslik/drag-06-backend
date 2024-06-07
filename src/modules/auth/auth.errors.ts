@@ -1,4 +1,4 @@
-import { UnauthorizedException, BadRequestException } from 'src/infrastructure/exceptions';
+import { UnauthorizedException, BadRequestException, NotAllowedException } from 'src/infrastructure/exceptions';
 
 export class InvalidTokenError extends BadRequestException {
   constructor() {
@@ -9,6 +9,12 @@ export class InvalidTokenError extends BadRequestException {
 export class UnauthorizedError extends UnauthorizedException {
   constructor() {
     super('AUTH.UNAUTHORIZED', 'Unauthorized');
+  }
+}
+
+export class ForbiddenError extends NotAllowedException {
+  constructor() {
+    super('AUTH.FORBIDDEN', 'Forbidden');
   }
 }
 

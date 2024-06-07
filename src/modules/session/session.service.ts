@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Maybe } from '@sweet-monads/maybe';
 import * as crypto from 'crypto';
 import { v4 as uuid } from 'uuid';
@@ -6,12 +6,13 @@ import { v4 as uuid } from 'uuid';
 import { Session, SessionWithUser } from 'src/infrastructure/database';
 import { UserIdentity } from 'src/infrastructure/decorators';
 
-import { SessionRepository } from './session.repository';
+import { SESSION_REPOSITORY } from './session.constants';
+import { ISessionRepository } from './session.repository.interface';
 import { ISessionService } from './session.service.interface';
 
 @Injectable()
 export class SessionService implements ISessionService {
-  constructor(private readonly sessionRepository: SessionRepository) {}
+  constructor(@Inject(SESSION_REPOSITORY) private sessionRepository: ISessionRepository) {}
 
   private generateSessionId = () => {
     return crypto.createHash('sha256').update(uuid()).update(crypto.randomBytes(256)).digest('hex');

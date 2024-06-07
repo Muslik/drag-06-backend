@@ -1,11 +1,13 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { none, Maybe, fromNullable } from '@sweet-monads/maybe';
 
+import { User } from 'src/infrastructure/database';
 import { IS_PUBLIC_KEY } from 'src/infrastructure/decorators';
 import { SESSION_ID } from 'src/infrastructure/decorators/auth.decorator';
-import { SessionService } from 'src/modules/session';
-import { TokenService } from 'src/modules/token';
+import { ISessionService, SESSION_SERVICE } from 'src/modules/session';
+import { ITokenService, TOKEN_SERVICE } from 'src/modules/token';
+import { IUserService, USERS_SERVICE } from 'src/modules/user';
 
 import { UnauthorizedError } from '../auth.errors';
 
@@ -13,17 +15,10 @@ import { UnauthorizedError } from '../auth.errors';
 export class AuthGuard implements CanActivate {
   constructor(
     protected reflector: Reflector,
-    protected readonly sessionService: SessionService,
-    protected readonly tokenService: TokenService,
+    @Inject(USERS_SERVICE) protected readonly userService: IUserService,
+    @Inject(SESSION_SERVICE) protected readonly sessionService: ISessionService,
+    @Inject(TOKEN_SERVICE) protected readonly tokenService: ITokenService,
   ) {}
-
-  private async getUserIdFromSessionId(sessionId: string): Promise<Maybe<number>> {
-    if (!sessionId) {
-      return none();
-    }
-
-    return this.sessionService.getSessionById(sessionId).then((maybe) => maybe.map(({ userId }) => userId));
-  }
 
   private getTokenFromHeader(headers: Record<string, string>): Maybe<string> {
     const header = headers.Authorization;
@@ -41,12 +36,23 @@ export class AuthGuard implements CanActivate {
     return fromNullable(token);
   }
 
-  private getUserIdFromAccessToken(accessToken: string): Maybe<number> {
+  private async getUserFromSessionId(sessionId: string): Promise<Maybe<User>> {
+    if (!sessionId) {
+      return none();
+    }
+
+    return this.sessionService.getSessionUserById(sessionId).then((maybe) => maybe.map(({ user }) => user));
+  }
+
+  private async getUserFromAccessToken(accessToken: string): Promise<Maybe<User>> {
     if (!accessToken) {
       return none();
     }
 
-    return this.tokenService.verifyToken(accessToken).map(({ userId }) => userId);
+    return this.tokenService
+      .verifyToken(accessToken)
+      .asyncMap(({ userId }) => this.userService.getById(userId))
+      .then((maybe) => maybe.join());
   }
 
   async canActivate(context: ExecutionContext) {
@@ -61,17 +67,15 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const cookieSessionId = request.cookies[SESSION_ID];
 
-    const userIdFromSession = await this.getUserIdFromSessionId(cookieSessionId);
-    const userIdFromAccessToken = this.getTokenFromHeader(request.headers).chain(this.getUserIdFromAccessToken);
+    const userFromSession = cookieSessionId ? await this.getUserFromSessionId(cookieSessionId) : none();
+    const userFromAccessToken = request.headers.Authorization
+      ? await this.getTokenFromHeader(request.headers).asyncChain(this.getUserFromAccessToken)
+      : none();
 
-    return userIdFromSession
-      .or(userIdFromAccessToken)
-      .map((userId) => {
-        if (!userId) {
-          throw new UnauthorizedError();
-        }
-
-        request.userId = userId;
+    return userFromSession
+      .or(userFromAccessToken)
+      .map((user) => {
+        request.user = user;
 
         return true;
       })

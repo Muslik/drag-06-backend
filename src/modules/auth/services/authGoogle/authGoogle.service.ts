@@ -44,6 +44,7 @@ export class AuthGoogleService implements IAuthGoogleService {
       return right({
         providerUserId: id ?? '',
         email: email ?? '',
+        username: email ?? '',
         lastName: lastName ?? '',
         firstName: firstName ?? '',
         providerType: 'google',

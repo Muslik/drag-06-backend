@@ -5,8 +5,10 @@ import { Maybe, fromNullable } from '@sweet-monads/maybe';
 
 import { Session, SessionCreate, SessionWithUser } from 'src/infrastructure/database';
 
+import { ISessionRepository } from './session.repository.interface';
+
 @Injectable()
-export class SessionRepository {
+export class SessionRepository implements ISessionRepository {
   constructor(private readonly txHost: TransactionHost<TransactionalAdapterPrisma>) {}
 
   private async updateLastAccessAt<T extends Session>(entity: T): Promise<void> {
@@ -55,10 +57,11 @@ export class SessionRepository {
       .findFirst({ where: { sessionId }, include: { user: true } })
       .then(fromNullable)
       .then((maybeSession) =>
-        maybeSession.asyncMap(async (session) => {
+        maybeSession.asyncMap(async (sessionWithUser) => {
+          const { user, ...session } = sessionWithUser;
           await this.updateLastAccessAt(session);
 
-          return session;
+          return sessionWithUser;
         }),
       );
   }

@@ -6,6 +6,7 @@ import { UserWithSocialCredentialsDto } from '../dto/userWithSocialCredentials.d
 
 export interface IUserService {
   createWithSocialCredentials: (user: UserWithSocialCredentialsDto) => Promise<User>;
+  getByProviderUserId: (providerUserId: string) => Promise<Maybe<User>>;
   getByEmail: (email: string) => Promise<Maybe<User>>;
   getById: (id: number) => Promise<Maybe<User>>;
 }

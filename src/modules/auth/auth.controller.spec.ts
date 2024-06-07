@@ -7,13 +7,7 @@ import { ConfigModule } from 'src/infrastructure/config';
 import { SESSION_ID } from 'src/infrastructure/decorators/auth.decorator';
 
 import { RefreshTokenInvalidError } from '../token';
-import {
-  AUTH_GOOGLE_SERVICE,
-  AUTH_SERVICE_OPTIONS,
-  AUTH_SERVICE,
-  AUTH_SESSION_SERVICE,
-  AUTH_JWT_SERVICE,
-} from './auth.constants';
+import { AUTH_GOOGLE_SERVICE, AUTH_SERVICE_OPTIONS, AUTH_SERVICE } from './auth.constants';
 import { AuthController } from './auth.controller';
 import { InvalidTokenError, UnauthorizedError } from './auth.errors';
 import { SignInProvider } from './dto/signIn.dto';
@@ -87,10 +81,6 @@ describe('AuthController', () => {
           provide: AUTH_SESSION_SERVICE,
           useValue: mockAuthSessionService,
         },
-        {
-          provide: AUTH_JWT_SERVICE,
-          useValue: mockAuthJwtService,
-        },
       ],
     }).compile();
 
@@ -151,24 +141,6 @@ describe('AuthController', () => {
       await expect(authController.logout(mockFastifyReply, { sessionId: '' })).rejects.toBeInstanceOf(
         UnauthorizedError,
       );
-    });
-  });
-
-  describe('POST /auth/jwt/sign-in', () => {
-    it('should return user session and set sessionId when authorized', async () => {
-      const expectedTokens = { accessToken: 'access-token', refreshToken: 'refresh-token' };
-
-      jest.spyOn(mockAuthJwtService, 'signIn').mockResolvedValueOnce(right(expectedTokens));
-
-      const result = await authController.jwtSignIn(mockSignInDto, mockUserIdentity);
-
-      expect(result).toEqual(expectedTokens);
-    });
-
-    it('should return error when not authorized', async () => {
-      jest.spyOn(mockAuthJwtService, 'signIn').mockResolvedValueOnce(left(new InvalidTokenError()));
-
-      await expect(authController.jwtSignIn(mockSignInDto, mockUserIdentity)).rejects.toBeInstanceOf(InvalidTokenError);
     });
   });
 

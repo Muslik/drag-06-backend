@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+import { Role } from 'src/infrastructure/database';
+
 export class UserAuthDto {
   @ApiProperty({ example: 1 })
   id: number;
@@ -8,7 +10,7 @@ export class UserAuthDto {
   username: string;
 
   @ApiProperty({ example: 'johny76@gmail.com' })
-  email: string;
+  email: string | null;
 
   @ApiPropertyOptional({ example: 'John' })
   firstName: string | null;
@@ -18,4 +20,7 @@ export class UserAuthDto {
 
   @ApiProperty({ example: '#ffffff' })
   avatarColor: string;
+
+  @ApiProperty({ example: Role.USER })
+  role: Role;
 }

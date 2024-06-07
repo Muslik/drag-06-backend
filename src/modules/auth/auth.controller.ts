@@ -10,49 +10,64 @@ import {
 import { FastifyReply } from 'fastify';
 
 import { ApiErrorResponse, ApiValidationErrorResponse } from 'src/infrastructure/api';
-import { Cookies, Public, UserId, UserIdentity } from 'src/infrastructure/decorators';
+import { ConfigService } from 'src/infrastructure/config';
+import { User } from 'src/infrastructure/database';
+import { Cookies, Public, RequestUser, UserIdentity } from 'src/infrastructure/decorators';
 import { SESSION_ID } from 'src/infrastructure/decorators/auth.decorator';
 
 import { JWTTokensDto } from '../token';
-import { AUTH_JWT_SERVICE, AUTH_SERVICE, AUTH_SESSION_SERVICE } from './auth.constants';
+import { AUTH_SERVICE, AUTH_SERVICE_OPTIONS } from './auth.constants';
 import { UnauthorizedError } from './auth.errors';
 import { RefreshTokenDto } from './dto/refreshToken.dto';
-import { SignInDto } from './dto/signIn.dto';
+import { SignInDtoGoogle, SignInDtoTelegram } from './dto/signIn.dto';
 import { UserAuthDto } from './dto/userAuth.dto';
+import { IAuthServiceOptions } from './interfaces/authServiceOptions';
 import { IAuthService } from './services/auth/auth.service.interface';
-import { IAuthJwtService } from './services/authJwt/authJwt.service.interface';
-import { IAuthSessionService } from './services/authSession/authSession.service.interface';
 
 @ApiTags('auth')
 @Controller('auth')
 @ApiInternalServerErrorResponse({ description: 'Something went wrong', type: ApiErrorResponse })
 export class AuthController {
   constructor(
-    @Inject(AUTH_SESSION_SERVICE) private authSessionService: IAuthSessionService,
-    @Inject(AUTH_JWT_SERVICE) private authJwtService: IAuthJwtService,
     @Inject(AUTH_SERVICE) private authService: IAuthService,
+    @Inject(AUTH_SERVICE_OPTIONS) private authServiceOptions: IAuthServiceOptions,
+    private readonly configService: ConfigService,
   ) {}
 
+  private async createSession(
+    response: FastifyReply,
+    userId: number,
+    userIdentity: UserIdentity,
+  ): Promise<JWTTokensDto> {
+    const { sessionId } = await this.authServiceOptions.sessionService.createSession(userId, userIdentity);
+    const tokens = this.authServiceOptions.tokenService.getUserTokens(userId, userIdentity);
+
+    response.setCookie(SESSION_ID, sessionId, {
+      httpOnly: true,
+      path: '/',
+      secure: true,
+      sameSite: this.configService.isDevelopment ? 'none' : 'strict',
+    });
+
+    return tokens;
+  }
+
   @Public()
-  @ApiOperation({ summary: 'Authorize and get user session' })
+  @ApiOperation({ summary: 'Authorize with google and get user session/tokens' })
   @ApiCreatedResponse({
     description: 'User successfully authorized',
-    type: UserAuthDto,
+    type: JWTTokensDto,
   })
   @ApiBadRequestResponse({ description: 'Bad request', type: ApiValidationErrorResponse })
-  @Post('sign-in')
-  async signIn(
-    @Body() signInDto: SignInDto,
+  @Post('sign-in/google')
+  async signInGoogle(
+    @Body() signInDto: SignInDtoGoogle,
     @Res({ passthrough: true }) response: FastifyReply,
     @UserIdentity() userIdentity: UserIdentity,
-  ) {
-    return this.authSessionService.signIn(signInDto, userIdentity).then((either) =>
+  ): Promise<JWTTokensDto> {
+    return this.authService.signInGoogle(signInDto).then((either) =>
       either
-        .mapRight(({ user, sessionId }) => {
-          response.setCookie(SESSION_ID, sessionId, { httpOnly: true, path: '/' });
-
-          return user;
-        })
+        .mapRight((user) => this.createSession(response, user.id, userIdentity))
         .unwrap((error) => {
           throw error;
         }),
@@ -60,16 +75,21 @@ export class AuthController {
   }
 
   @Public()
-  @ApiOperation({ summary: 'Authorize and get JWT tokens' })
-  @ApiCreatedResponse({ description: 'User successfully authorized', type: JWTTokensDto })
+  @ApiOperation({ summary: 'Authorize with telegram and get user session/tokens' })
+  @ApiCreatedResponse({
+    description: 'User successfully authorized',
+    type: JWTTokensDto,
+  })
   @ApiBadRequestResponse({ description: 'Bad request', type: ApiValidationErrorResponse })
-  @Post('jwt/sign-in')
-  async jwtSignIn(@Body() signInDto: SignInDto, @UserIdentity() userIdentity: UserIdentity) {
-    return this.authJwtService.signIn(signInDto, userIdentity).then((either) =>
-      either.unwrap((error) => {
-        throw error;
-      }),
-    );
+  @Post('sign-in/telegram')
+  async signInTelegram(
+    @Body() signInDto: SignInDtoTelegram,
+    @Res({ passthrough: true }) response: FastifyReply,
+    @UserIdentity() userIdentity: UserIdentity,
+  ): Promise<JWTTokensDto> {
+    const user = await this.authService.signInTelegram(signInDto);
+
+    return this.createSession(response, user.id, userIdentity);
   }
 
   @Public()
@@ -81,8 +101,8 @@ export class AuthController {
   @ApiBadRequestResponse({ description: 'Bad request', type: ApiValidationErrorResponse })
   @ApiUnauthorizedResponse({ description: 'User not authorized', type: ApiErrorResponse })
   @Post('jwt/refresh')
-  async refreshTokens(@UserIdentity() userIdentity: UserIdentity, @Body() refreshToken: RefreshTokenDto) {
-    return this.authJwtService.refresh(refreshToken, userIdentity).then((either) =>
+  async refreshTokens(@UserIdentity() userIdentity: UserIdentity, @Body() { refreshToken }: RefreshTokenDto) {
+    return this.authServiceOptions.tokenService.getRefreshedUserTokens(refreshToken, userIdentity).then((either) =>
       either.unwrap((error) => {
         throw error;
       }),
@@ -96,8 +116,8 @@ export class AuthController {
     type: ApiErrorResponse,
   })
   @Post('me')
-  async me(@UserId() userId: number) {
-    const userMaybe = await this.authService.getMe(userId);
+  async me(@RequestUser() user: User) {
+    const userMaybe = await this.authService.getMe(user.id);
 
     if (userMaybe.isJust()) {
       return userMaybe.value;
@@ -118,7 +138,7 @@ export class AuthController {
       throw new UnauthorizedError();
     }
 
-    await this.authSessionService.logout(sessionId);
+    await this.authServiceOptions.sessionService.deleteSession(sessionId);
     response.clearCookie(SESSION_ID);
   }
 }

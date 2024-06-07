@@ -2,7 +2,6 @@ import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { MiddlewareConsumer, Module, Provider, ValidationPipe } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
-import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ClsModule } from 'nestjs-cls';
 
@@ -11,14 +10,14 @@ import { GlobalExceptionFilter } from 'src/infrastructure/filters/exception.filt
 import { ExceptionInterceptor } from 'src/infrastructure/interceptors/exception.interceptor';
 import { LoggerMiddleware } from 'src/infrastructure/middlewares/logger.middleware';
 
-import { ConfigModule, ConfigService } from './infrastructure/config';
+import { ConfigModule } from './infrastructure/config';
 import { DatabaseModule, PrismaService } from './infrastructure/database';
 import { RateLimitGuard } from './infrastructure/guards/rateLimit.guard';
-import { AuthModule, AuthGuard } from './modules/auth';
-import { SessionModule, SessionService } from './modules/session';
-import { TokenModule, TokenService } from './modules/token';
+import { AuthModule, AuthGuard, RolesGuard } from './modules/auth';
+import { ISessionService, SESSION_SERVICE, SessionModule } from './modules/session';
+import { ITokenService, TOKEN_SERVICE, TokenModule } from './modules/token';
 import { TournamentModule } from './modules/tournament';
-import { UsersModule, UserService } from './modules/user';
+import { UsersModule, IUserService, USERS_SERVICE } from './modules/user';
 
 const pipes = [
   {
@@ -54,13 +53,16 @@ const filters = [
 const guards: Provider[] = [
   {
     provide: APP_GUARD,
-    useExisting: AuthGuard,
+    useClass: AuthGuard,
+  },
+  {
+    provide: APP_GUARD,
+    useClass: RolesGuard,
   },
   {
     provide: APP_GUARD,
     useClass: RateLimitGuard,
   },
-  AuthGuard,
 ];
 
 @Module({
@@ -83,24 +85,14 @@ const guards: Provider[] = [
         }),
       ],
     }),
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.jwt.secret,
-        signOptions: {
-          issuer: configService.jwt.issuer,
-        },
-      }),
-      inject: [ConfigService],
-    }),
     AuthModule.forRootAsync({
       imports: [UsersModule, SessionModule, TokenModule],
-      useFactory: async (userService: UserService, sessionService: SessionService, tokenService: TokenService) => ({
+      useFactory: async (userService: IUserService, sessionService: ISessionService, tokenService: ITokenService) => ({
         tokenService,
         userService,
         sessionService,
       }),
-      inject: [UserService, SessionService, TokenService],
+      inject: [USERS_SERVICE, SESSION_SERVICE, TOKEN_SERVICE],
     }),
     UsersModule,
     TokenModule,

@@ -7,7 +7,7 @@ import { User } from 'src/infrastructure/database';
 
 import { AUTH_SERVICE_OPTIONS, AUTH_GOOGLE_SERVICE } from '../../auth.constants';
 import { InvalidTokenError } from '../../auth.errors';
-import { SignInDto, SignInProvider } from '../../dto/signIn.dto';
+import { SignInDtoGoogle, SignInProvider } from '../../dto/signIn.dto';
 import { AuthService } from './auth.service';
 
 const mockAuthGoogleService = {
@@ -49,7 +49,7 @@ describe('AuthService', () => {
   });
 
   it('should sign in using Google provider successfully', async () => {
-    const signInDto: SignInDto = {
+    const signInDto: SignInDtoGoogle = {
       provider: SignInProvider.GOOGLE,
       token: 'google-token',
     };
@@ -65,7 +65,7 @@ describe('AuthService', () => {
   });
 
   it('should return an error if GoogleAuthService getUserInfo fails', async () => {
-    const signInDto: SignInDto = {
+    const signInDto: SignInDtoGoogle = {
       provider: SignInProvider.GOOGLE,
       token: 'invalid-token',
     };
@@ -81,7 +81,7 @@ describe('AuthService', () => {
 
   it('creates a new user if the user does not exist', async () => {
     const googleUserInfo = { email: 'test@example.com' };
-    const signInDto: SignInDto = {
+    const signInDto: SignInDtoGoogle = {
       provider: SignInProvider.GOOGLE,
       token: 'invalid-token',
     };

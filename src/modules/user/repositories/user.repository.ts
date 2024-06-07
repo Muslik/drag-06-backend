@@ -20,11 +20,34 @@ export class UserRepository {
     );
   }
 
+  async findByUsername(username: string): Promise<Maybe<User>> {
+    return fromNullable(
+      await this.txHost.tx.user.findFirst({
+        where: { username },
+      }),
+    );
+  }
+
   async findByEmail(email: string): Promise<Maybe<User>> {
     return fromNullable(
       await this.txHost.tx.user.findFirst({
         where: { email },
       }),
+    );
+  }
+
+  async findByProviderUserId(providerUserId: string): Promise<Maybe<User>> {
+    return fromNullable(
+      await this.txHost.tx.userSocialCredentials
+        .findFirst({
+          where: {
+            providerUserId,
+          },
+          include: {
+            user: true,
+          },
+        })
+        .then((findValue) => findValue?.user ?? null),
     );
   }
 
